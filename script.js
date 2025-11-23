@@ -271,35 +271,8 @@ function iniciarSistema() {
 function configurarEventos() {
     console.log('🔧 Configurando eventos...');
     
-    // 🎯 FORMULÁRIO DE LOGIN PERSONALIZADO
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            console.log('🎯 FORMULÁRIO DE LOGIN ENVIADO!');
-            
-            // 🎯 PEGAR DADOS DO FORMULÁRIO
-            const email = document.getElementById('loginEmail').value;
-            const nome = document.getElementById('loginName').value;
-            
-            if (!email || !nome) {
-                alert('❌ Por favor, preencha todos os campos!');
-                return;
-            }
-            
-            // 🎯 VALIDAR EMAIL INSTITUCIONAL
-            if (!email.includes('@educador.edu.es.gov.br') && !email.includes('@edu.es.gov.br')) {
-                alert('⚠️ Use um email institucional (@educador.edu.es.gov.br ou @edu.es.gov.br)');
-                return;
-            }
-            
-            // 🎯 FAZER LOGIN COM OS DADOS DO FORMULÁRIO
-            fazerLoginComDados(nome, email);
-        });
-        console.log('✅ Formulário de login configurado');
-    } else {
-        console.error('❌ Formulário de login não encontrado!');
-    }
+    // 🎯 LOGIN GOOGLE CONFIGURADO
+console.log('✅ Login Google configurado');
     
     // 🎯 MENU DE NAVEGAÇÃO
     const menuBtn = document.getElementById('menuButton');
@@ -1506,3 +1479,4 @@ window.mostrarTela = mostrarTela;
 
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO 5.0 SEM FORMS!');
+
