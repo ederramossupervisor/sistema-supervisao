@@ -2,7 +2,7 @@
 console.log('🎯 INICIANDO SISTEMA SUPERVISÃO - VERSÃO 5.0 SEM FORMS');
 
 // URL do seu Google Apps Script
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyNKPEIJIaqByVqwFHvEb9Ii0ItQpDSUQkX_HfLC2p4iMphdOeU1k1S1RDPN3mXJ5B3/exec"
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFcNbAJtA8DFnbteiIul5ZYC0zhHgyjuA0bPT-QJ_9DVrDSAucPH2yAo44jK6pjTdK/exec"
 const CLIENT_ID = "725842703932-oe3v18cjvunvdarcdi7825rdgflqqqvj.apps.googleusercontent.com";
 // Estados globais
 let currentUser = null;
@@ -1503,5 +1503,6 @@ window.selectAllSchools = selectAllSchools;
 window.deselectAllSchools = deselectAllSchools;
 window.selecionarDocumento = selecionarDocumento;
 window.mostrarTela = mostrarTela;
+
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO 5.0 SEM FORMS!');
