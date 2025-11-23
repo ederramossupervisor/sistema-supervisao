@@ -88,7 +88,7 @@
         </div>
         <p class="login-subtitle">Geração automatizada de documentos educacionais</p>
         
-        <!-- 🎯 LOGIN GOOGLE -->
+        <!-- 🎯 LOGIN GOOGLE - VERSÃO CORRIGIDA -->
 <div class="google-login-section">
     <div id="g_id_onload"
         data-client_id="725842703932-oe3v18cjvunvdarcdi7825rdgflqqqvj.apps.googleusercontent.com"
@@ -104,10 +104,25 @@
         data-theme="filled_blue"
         data-text="signin_with"
         data-size="large"
-        data-logo_alignment="left"
-        data-width="300">
+        data-logo_alignment="left">
     </div>
 </div>
+
+<script>
+// 🎯 FUNÇÃO GLOBAL PARA GOOGLE SIGN-IN
+function handleGoogleSignIn(response) {
+    console.log('🔐 Google Sign-In Response:', response);
+    
+    if (response.credential) {
+        // 🎯 CHAMAR FUNÇÃO DO SEU SCRIPT
+        if (typeof handleGoogleAuth === 'function') {
+            handleGoogleAuth(response);
+        } else {
+            console.error('❌ handleGoogleAuth não encontrado');
+        }
+    }
+}
+</script>
             <!-- Tela Principal -->
             <div id="mainScreen" class="screen">
                 <div class="welcome-section">
@@ -269,4 +284,5 @@
 </body>
 
 </html>
+
 
