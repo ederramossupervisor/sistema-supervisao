@@ -1,7 +1,7 @@
-// 🎯 SISTEMA SUPERVISÃO - VERSÃO 5.0 - COM AUTENTICAÇÃO GOOGLE COMPLETA
-console.log('🎯 INICIANDO SISTEMA SUPERVISÃO - VERSÃO 5.0 COM GOOGLE AUTH');
+// 🎯 SISTEMA SUPERVISÃO - VERSÃO 6.0 - SEM PROBLEMAS DE CORS
+console.log('🎯 INICIANDO SISTEMA SUPERVISÃO - VERSÃO 6.0 SEM CORS');
 
-// URL do seu Google Apps Script
+// URL do seu Google Apps Script (JÁ ATUALIZADA)
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzH4d2PI-9gEzhLF-Nquuy3bSIiYJJLiec5hB4HyuLxbvzb8KndpkWQqTxYGZeM7-o/exec";
 const CLIENT_ID = "725842703932-oe3v18cjvunvdarcdi7825rdgflqqqvj.apps.googleusercontent.com";
 
@@ -236,6 +236,68 @@ const APP_DATA = {
 };
 
 // ================================
+// 🎯 NOVA FUNÇÃO PARA CHAMAR BACKEND (SEM CORS!)
+// ================================
+
+async function callBackend(action, data = {}) {
+    console.log('📤 Chamando backend:', action);
+    
+    return new Promise((resolve, reject) => {
+        // 🎯 TENTAR FETCH PRIMEIRO (pode funcionar em alguns navegadores)
+        fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({action: action, ...data})
+        })
+        .then(response => response.json())
+        .then(result => {
+            console.log('✅ Resposta do backend:', result);
+            resolve(result);
+        })
+        .catch(fetchError => {
+            console.log('⚠️ Fetch falhou, tentando método alternativo...');
+            
+            // 🎯 MÉTODO ALTERNATIVO - FORM SUBMIT
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = APPS_SCRIPT_URL;
+            form.style.display = 'none';
+            
+            const input = document.createElement('input');
+            input.name = 'payload';
+            input.value = JSON.stringify({action: action, ...data});
+            form.appendChild(input);
+            
+            document.body.appendChild(form);
+            
+            // 🎯 CRIAR IFRAME PARA RECEBER RESPOSTA
+            const iframe = document.createElement('iframe');
+            iframe.name = 'responseFrame';
+            iframe.style.display = 'none';
+            
+            iframe.onload = function() {
+                try {
+                    const responseText = iframe.contentDocument.body.innerText;
+                    const result = JSON.parse(responseText || '{}');
+                    console.log('✅ Resposta alternativa:', result);
+                    resolve(result);
+                } catch (e) {
+                    resolve({success: false, error: 'Erro ao processar resposta'});
+                }
+                
+                // Limpar
+                document.body.removeChild(form);
+                document.body.removeChild(iframe);
+            };
+            
+            document.body.appendChild(iframe);
+            form.target = 'responseFrame';
+            form.submit();
+        });
+    });
+}
+
+// ================================
 // FUNÇÕES PRINCIPAIS - INICIALIZAÇÃO
 // ================================
 
@@ -308,7 +370,7 @@ function configurarEventos() {
 }
 
 // ================================
-// 🎯 AUTENTICAÇÃO GOOGLE - FUNÇÕES COMPLETAS
+// 🎯 AUTENTICAÇÃO GOOGLE - ATUALIZADA
 // ================================
 
 // 🎯 CONFIGURAÇÃO GOOGLE SIGN-IN
@@ -320,7 +382,7 @@ function initializeGoogleSignIn() {
             client_id: CLIENT_ID,
             callback: handleGoogleSignIn,
             context: 'signin',
-            ux_mode: 'popup', // Mudado para popup para melhor controle
+            ux_mode: 'popup',
             auto_select: false
         });
         
@@ -340,7 +402,7 @@ function initializeGoogleSignIn() {
             );
         }
         
-        // 🎯 OFERECER ONE-TAP SE TIVER COOKIES (apenas se não estiver logado)
+        // 🎯 OFERECER ONE-TAP SE TIVER COOKIES
         if (!localStorage.getItem('googleToken')) {
             google.accounts.id.prompt();
         }
@@ -351,7 +413,7 @@ function initializeGoogleSignIn() {
     }
 }
 
-// 🎯 FUNÇÃO PRINCIPAL DE AUTENTICAÇÃO
+// 🎯 FUNÇÃO PRINCIPAL DE AUTENTICAÇÃO (ATUALIZADA)
 function handleGoogleSignIn(response) {
     console.log('🔐 Resposta do Google Sign-In:', response);
     
@@ -363,7 +425,7 @@ function handleGoogleSignIn(response) {
     }
 }
 
-// 🎯 SOLUÇÃO DEFINITIVA - JSONP + FALLBACK
+// 🎯 VALIDAÇÃO COM BACKEND (ATUALIZADA)
 async function validateWithBackend(credential) {
     try {
         console.log('🔄 Validando token...');
@@ -377,19 +439,12 @@ async function validateWithBackend(credential) {
             return;
         }
         
-        // 🎯 TENTAR BACKEND EM SEGUNDO PLANO (ignora erros)
-        try {
-            await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors', // 🎯 Ignora CORS
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    action: 'validateToken',
-                    token: credential
-                })
-            });
-            console.log('✅ Backend notificado (modo no-cors)');
-        } catch (backendError) {
+        // 🎯 TENTAR BACKEND COM NOVA FUNÇÃO
+        const backendResult = await callBackend('validateToken', { token: credential });
+        
+        if (backendResult && backendResult.success) {
+            console.log('✅ Backend validou token');
+        } else {
             console.log('⚠️ Backend offline, continuando com frontend');
         }
         
@@ -405,7 +460,9 @@ async function validateWithBackend(credential) {
         console.error('❌ Erro na validação:', error);
         alert('Erro na autenticação. Tente novamente.');
     }
-}// 🎯 FUNÇÃO DE LOGIN BEM-SUCEDIDO (ATUALIZADA)
+}
+
+// 🎯 FUNÇÃO DE LOGIN BEM-SUCEDIDO
 function handleSuccessfulLogin(user, credential) {
     console.log('✅ Login bem-sucedido:', user);
     
@@ -448,42 +505,7 @@ function loadGoogleSignInScript() {
     }
 }
 
-// 🎯 VALIDAR TOKEN AO CARREGAR A PÁGINA
-async function validateTokenOnLoad(token) {
-    try {
-        const response = await fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'validateToken', token: token })
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            // Token ainda válido, continuar logado
-            carregarConfiguracao();
-            mostrarMenu();
-            atualizarInterfaceUsuario();
-            mostrarTela('mainScreen');
-            carregarDocumentos();
-        } else {
-            // Token inválido, fazer logout
-            console.log('❌ Token inválido, fazendo logout...');
-            fazerLogout();
-        }
-    } catch (error) {
-        console.error('❌ Erro na validação do token:', error);
-        // Continuar logado em caso de erro de rede (fallback)
-        carregarConfiguracao();
-        mostrarMenu();
-        atualizarInterfaceUsuario();
-        mostrarTela('mainScreen');
-        carregarDocumentos();
-    }
-}
-
 function verificarLogin() {
-    // 🎯 PRIMEIRO: Verificar se tem token Google
     const googleToken = localStorage.getItem('googleToken');
     const userData = localStorage.getItem('supervisionUser');
     
@@ -492,8 +514,28 @@ function verificarLogin() {
             currentUser = JSON.parse(userData);
             console.log('✅ Usuário já logado:', currentUser.name);
             
-            // 🎯 VALIDAR TOKEN NOVAMENTE
-            validateTokenOnLoad(googleToken);
+            // 🎯 VALIDAR TOKEN NOVAMENTE COM NOVA FUNÇÃO
+            callBackend('validateToken', { token: googleToken })
+                .then(result => {
+                    if (result && result.success) {
+                        carregarConfiguracao();
+                        mostrarMenu();
+                        atualizarInterfaceUsuario();
+                        mostrarTela('mainScreen');
+                        carregarDocumentos();
+                    } else {
+                        console.log('❌ Token inválido, fazendo logout...');
+                        fazerLogout();
+                    }
+                })
+                .catch(() => {
+                    // Em caso de erro, continuar logado (fallback)
+                    carregarConfiguracao();
+                    mostrarMenu();
+                    atualizarInterfaceUsuario();
+                    mostrarTela('mainScreen');
+                    carregarDocumentos();
+                });
             
         } catch (e) {
             console.error('❌ Erro ao carregar usuário:', e);
@@ -501,7 +543,6 @@ function verificarLogin() {
         }
     } else {
         console.log('🔐 Usuário não logado, aguardando autenticação...');
-        // Google Sign-In será inicializado em configurarEventos()
     }
 }
 
@@ -540,7 +581,7 @@ function fazerLogout() {
 }
 
 // ================================
-// FUNÇÕES DE INTERFACE
+// FUNÇÕES DE INTERFACE (MANTIDAS)
 // ================================
 
 function mostrarMenu() {
@@ -562,21 +603,17 @@ function atualizarInterfaceUsuario() {
 function mostrarTela(nomeTela) {
     console.log('🖥️ Mostrando tela:', nomeTela);
     
-    // 🎯 CORREÇÃO: Scroll sempre no topo ao trocar de tela
     window.scrollTo(0, 0);
     
-    // Esconder todas as telas
     const telas = document.querySelectorAll('.screen');
     telas.forEach(tela => {
         tela.classList.remove('active');
     });
     
-    // Mostrar tela específica
     const telaAlvo = document.getElementById(nomeTela);
     if (telaAlvo) {
         telaAlvo.classList.add('active');
         
-        // Ações específicas para cada tela
         if (nomeTela === 'configScreen') {
             carregarFormularioConfiguracao();
         }
@@ -594,7 +631,6 @@ function carregarDocumentos() {
         return;
     }
     
-    // Criar HTML dos documentos
     grid.innerHTML = APP_DATA.documentTypes.map(doc => `
         <div class="document-card" onclick="selecionarDocumento('${doc.id}')">
             <div class="document-icon">
@@ -625,10 +661,6 @@ function selecionarDocumento(documentId) {
     criarFormularioDocumento(documentId);
 }
 
-// ================================
-// FUNÇÕES DO MENU
-// ================================
-
 function toggleMenu() {
     const navLinks = document.querySelector('.nav-links');
     if (navLinks) {
@@ -637,7 +669,7 @@ function toggleMenu() {
 }
 
 // ================================
-// FUNÇÕES DE CONFIGURAÇÃO
+// FUNÇÕES DE CONFIGURAÇÃO (MANTIDAS)
 // ================================
 
 function carregarConfiguracao() {
@@ -663,12 +695,10 @@ function carregarFormularioConfiguracao() {
         return;
     }
     
-    // Preencher nome se já existir
     if (supervisorConfig && supervisorConfig.name) {
         supervisorName.value = supervisorConfig.name;
     }
     
-    // Limpar e carregar escolas no multiselect
     schoolsMultiselect.innerHTML = '';
     
     if (APP_DATA.dropdowns && APP_DATA.dropdowns.escolas) {
@@ -688,7 +718,6 @@ function carregarFormularioConfiguracao() {
                 <span class="option-text">${escola}</span>
             `;
             
-            // Evento de clique
             option.addEventListener('click', function() {
                 this.classList.toggle('selected');
                 atualizarContadorSelecionadas();
@@ -699,7 +728,6 @@ function carregarFormularioConfiguracao() {
         
         console.log(`✅ ${APP_DATA.dropdowns.escolas.length} escolas carregadas no multiselect`);
         
-        // Configurar busca e atualizar contador
         configurarBuscaEscolas();
         atualizarContadorSelecionadas();
     }
@@ -746,11 +774,9 @@ function handleSupervisorConfig(e) {
     
     const name = supervisorName.value.trim();
     
-    // Coletar escolas selecionadas do MULTISELECT
     const selectedOptions = document.querySelectorAll('.multiselect-option.selected');
     const selectedSchools = Array.from(selectedOptions).map(option => option.dataset.value);
     
-    // Validações
     if (!name) {
         alert('❌ Por favor, informe seu nome como supervisor.');
         return;
@@ -761,7 +787,6 @@ function handleSupervisorConfig(e) {
         return;
     }
     
-    // Salvar configuração
     supervisorConfig = {
         name: name,
         schools: selectedSchools
@@ -775,7 +800,6 @@ function handleSupervisorConfig(e) {
     console.log('💾 Configuração salva:', supervisorConfig);
 }
 
-// FUNÇÕES PARA OS BOTÕES DE SELEÇÃO RÁPIDA
 function selectAllSchools() {
     const options = document.querySelectorAll('.multiselect-option:not(.hidden)');
     options.forEach(option => {
@@ -793,100 +817,18 @@ function deselectAllSchools() {
 }
 
 // ================================
-// FUNÇÕES DE PREENCHIMENTO AUTOMÁTICO
-// ================================
-
-function preencherCamposAutomaticos(escolaSelecionada, serieSelecionada = null) {
-    console.log('🏫 Preenchendo campos automáticos para:', escolaSelecionada, 'Série:', serieSelecionada);
-    
-    // Preencher município e diretor baseado na escola
-    if (ESCOLAS_DATA_FRONTEND[escolaSelecionada]) {
-        const dados = ESCOLAS_DATA_FRONTEND[escolaSelecionada];
-        
-        // Preencher todos os campos de município
-        const municipioFields = document.querySelectorAll('input, select, textarea');
-        municipioFields.forEach(field => {
-            const label = field.closest('.form-group')?.querySelector('label');
-            if (label && label.textContent.includes('Município')) {
-                field.value = dados.municipio;
-                console.log('✅ Município preenchido:', dados.municipio);
-            }
-        });
-        
-        // Preencher todos os campos de diretor
-        const diretorFields = document.querySelectorAll('input, select, textarea');
-        diretorFields.forEach(field => {
-            const label = field.closest('.form-group')?.querySelector('label');
-            if (label && label.textContent.includes('Diretor')) {
-                field.value = dados.diretor;
-                console.log('✅ Diretor preenchido:', dados.diretor);
-            }
-        });
-    }
-    
-    // Preencher etapa de ensino baseado na série
-    if (serieSelecionada) {
-        preencherEtapaEnsino(serieSelecionada);
-    }
-    
-    // Validar formulário após preenchimento automático
-    setTimeout(validarFormulario, 100);
-}
-
-function preencherEtapaEnsino(serieSelecionada) {
-    console.log('📚 Preenchendo etapa de ensino para série:', serieSelecionada);
-    
-    // Mapeamento série → etapa de ensino
-    const etapasEnsino = {
-        // Ensino Fundamental - Anos Iniciais
-        "1º ano": "Ensino Fundamental - Anos Iniciais",
-        "2º ano": "Ensino Fundamental - Anos Iniciais", 
-        "3º ano": "Ensino Fundamental - Anos Iniciais",
-        "4º ano": "Ensino Fundamental - Anos Iniciais",
-        "5º ano": "Ensino Fundamental - Anos Iniciais",
-        
-        // Ensino Fundamental - Anos Finais
-        "6º ano": "Ensino Fundamental - Anos Finais",
-        "7º ano": "Ensino Fundamental - Anos Finais",
-        "8º ano": "Ensino Fundamental - Anos Finais", 
-        "9º ano": "Ensino Fundamental - Anos Finais",
-        
-        // Ensino Médio
-        "1ª série": "Ensino Médio",
-        "2ª série": "Ensino Médio",
-        "3ª série": "Ensino Médio"
-    };
-    
-    const etapa = etapasEnsino[serieSelecionada];
-    
-    if (etapa) {
-        // Preencher todos os campos de Etapa de Ensino
-        const etapaFields = document.querySelectorAll('input, select, textarea');
-        etapaFields.forEach(field => {
-            const label = field.closest('.form-group')?.querySelector('label');
-            if (label && label.textContent.includes('Etapa de Ensino')) {
-                field.value = etapa;
-                console.log('✅ Etapa de Ensino preenchida:', etapa);
-            }
-        });
-    }
-}
-
-// ================================
-// FUNÇÕES DE FORMULÁRIO DE DOCUMENTOS
+// FUNÇÕES DE FORMULÁRIO (MANTIDAS)
 // ================================
 
 function criarFormularioDocumento(documentId) {
     const documento = APP_DATA.documentTypes.find(doc => doc.id === documentId);
     if (!documento) return;
     
-    // Atualizar título
     const formTitle = document.getElementById('formTitle');
     if (formTitle) {
         formTitle.textContent = `Preencha os dados - ${documento.name}`;
     }
     
-    // Criar formulário
     const form = document.getElementById('documentForm');
     if (!form) return;
     
@@ -899,7 +841,6 @@ function criarFormularioDocumento(documentId) {
         }
     });
     
-    // Configurar botão gerar
     const generateBtn = document.getElementById('generateButton');
     if (generateBtn) {
         generateBtn.onclick = function() {
@@ -911,7 +852,6 @@ function criarFormularioDocumento(documentId) {
         generateBtn.disabled = true;
     }
     
-    // Configurar botão de voltar
     const backBtn = document.getElementById('backButton');
     if (backBtn) {
         backBtn.onclick = function() {
@@ -919,10 +859,8 @@ function criarFormularioDocumento(documentId) {
         };
     }
     
-    // Mostrar tela do formulário
     mostrarTela('formScreen');
     
-    // Validar formulário inicial
     setTimeout(validarFormulario, 100);
 }
 
@@ -943,18 +881,15 @@ function criarCampoFormulario(field, index, documentId) {
             input.id = `field-${index}`;
             input.required = field.required;
             
-            // Adicionar opção vazia
             const emptyOption = document.createElement('option');
             emptyOption.value = '';
             emptyOption.textContent = 'Selecione...';
             input.appendChild(emptyOption);
             
-            // Preencher opções baseado no nome do campo
             let options = [];
             if (field.name === 'Nome da Escola') {
                 options = supervisorConfig?.schools || APP_DATA.dropdowns.escolas;
                 
-                // Adicionar evento para preenchimento automático
                 input.addEventListener('change', function() {
                     preencherCamposAutomaticos(this.value);
                 });
@@ -965,7 +900,6 @@ function criarCampoFormulario(field, index, documentId) {
             } else if (field.name === 'Série') {
                 options = APP_DATA.dropdowns.serie;
                 
-                // Adicionar evento para etapa de ensino
                 input.addEventListener('change', function() {
                     preencherEtapaEnsino(this.value);
                 });
@@ -994,7 +928,6 @@ function criarCampoFormulario(field, index, documentId) {
             input.id = `field-${index}`;
             input.required = field.required;
             
-            // 🎯 SOLUÇÃO: Data atual sem problemas de fuso
             const hoje = new Date();
             const ano = hoje.getFullYear();
             const mes = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -1012,7 +945,6 @@ function criarCampoFormulario(field, index, documentId) {
             input.id = `field-${index}`;
             input.required = field.required;
             
-            // Preenchimentos automáticos
             if (field.name === 'Nome do Supervisor' && supervisorConfig?.name) {
                 input.value = supervisorConfig.name;
             } else if (field.name === 'Número do Ofício' && documentId === 'cuidador') {
@@ -1058,7 +990,6 @@ function validarFormulario() {
     }
 }
 
-// 🎯 FUNÇÃO PARA FORMATAR DATA EM PORTUGUÊS (SOLUÇÃO DEFINITIVA)
 function formatarDataFrontend(dataString) {
     const meses = [
         "janeiro", "fevereiro", "março", "abril", "maio", "junho",
@@ -1067,10 +998,8 @@ function formatarDataFrontend(dataString) {
     
     console.log('📅 Data recebida para formatação:', dataString);
     
-    // 🎯 SOLUÇÃO: Usar split direto - IGNORAR completamente o objeto Date
     const [ano, mes, dia] = dataString.split('-').map(num => parseInt(num));
     
-    // Validar se os valores fazem sentido
     if (isNaN(dia) || isNaN(mes) || isNaN(ano)) {
         console.log('❌ Data inválida:', dataString);
         return dataString;
@@ -1095,7 +1024,6 @@ function coletarDadosFormulario() {
         const fieldName = label ? label.textContent.replace(' *', '') : `field_${input.id}`;
         let valor = input.value;
         
-        // FORMATAR CAMPOS DE DATA PARA PORTUGUÊS
         if (input.type === 'date' && valor) {
             valor = formatarDataFrontend(valor);
             console.log(`📅 Data formatada no frontend: ${input.value} -> ${valor}`);
@@ -1118,20 +1046,68 @@ function coletarDadosFormulario() {
     return data;
 }
 
-function normalizarDadosFormulario(formData) {
-    const normalizado = {};
+function preencherCamposAutomaticos(escolaSelecionada, serieSelecionada = null) {
+    console.log('🏫 Preenchendo campos automáticos para:', escolaSelecionada, 'Série:', serieSelecionada);
     
-    Object.keys(formData).forEach(key => {
-        // Normalizar nomes de campos para compatibilidade
-        const chaveNormalizada = key
-            .replace("Nome do(a) Aluno(a)", "Nome do Aluno")
-            .replace("Nome do Aluno(a)", "Nome do Aluno")
-            .trim();
-            
-        normalizado[chaveNormalizada] = formData[key];
-    });
+    if (ESCOLAS_DATA_FRONTEND[escolaSelecionada]) {
+        const dados = ESCOLAS_DATA_FRONTEND[escolaSelecionada];
+        
+        const municipioFields = document.querySelectorAll('input, select, textarea');
+        municipioFields.forEach(field => {
+            const label = field.closest('.form-group')?.querySelector('label');
+            if (label && label.textContent.includes('Município')) {
+                field.value = dados.municipio;
+                console.log('✅ Município preenchido:', dados.municipio);
+            }
+        });
+        
+        const diretorFields = document.querySelectorAll('input, select, textarea');
+        diretorFields.forEach(field => {
+            const label = field.closest('.form-group')?.querySelector('label');
+            if (label && label.textContent.includes('Diretor')) {
+                field.value = dados.diretor;
+                console.log('✅ Diretor preenchido:', dados.diretor);
+            }
+        });
+    }
     
-    return normalizado;
+    if (serieSelecionada) {
+        preencherEtapaEnsino(serieSelecionada);
+    }
+    
+    setTimeout(validarFormulario, 100);
+}
+
+function preencherEtapaEnsino(serieSelecionada) {
+    console.log('📚 Preenchendo etapa de ensino para série:', serieSelecionada);
+    
+    const etapasEnsino = {
+        "1º ano": "Ensino Fundamental - Anos Iniciais",
+        "2º ano": "Ensino Fundamental - Anos Iniciais", 
+        "3º ano": "Ensino Fundamental - Anos Iniciais",
+        "4º ano": "Ensino Fundamental - Anos Iniciais",
+        "5º ano": "Ensino Fundamental - Anos Iniciais",
+        "6º ano": "Ensino Fundamental - Anos Finais",
+        "7º ano": "Ensino Fundamental - Anos Finais",
+        "8º ano": "Ensino Fundamental - Anos Finais", 
+        "9º ano": "Ensino Fundamental - Anos Finais",
+        "1ª série": "Ensino Médio",
+        "2ª série": "Ensino Médio",
+        "3ª série": "Ensino Médio"
+    };
+    
+    const etapa = etapasEnsino[serieSelecionada];
+    
+    if (etapa) {
+        const etapaFields = document.querySelectorAll('input, select, textarea');
+        etapaFields.forEach(field => {
+            const label = field.closest('.form-group')?.querySelector('label');
+            if (label && label.textContent.includes('Etapa de Ensino')) {
+                field.value = etapa;
+                console.log('✅ Etapa de Ensino preenchida:', etapa);
+            }
+        });
+    }
 }
 
 function gerarNumeroOfício() {
@@ -1140,7 +1116,10 @@ function gerarNumeroOfício() {
     return `OF-${numero}`;
 }
 
-// 🎯 FUNÇÃO CORRIGIDA - RESISTENTE A CORS
+// ================================
+// 🎯 GERAÇÃO DE DOCUMENTOS (ATUALIZADA)
+// ================================
+
 async function gerarDocumentoCompleto(documentType, formData) {
     console.log(`🎯 Gerando documento: ${documentType}`);
     
@@ -1148,60 +1127,43 @@ async function gerarDocumentoCompleto(documentType, formData) {
     const originalContent = generateBtn?.innerHTML;
     
     try {
-        // Feedback visual
         if (generateBtn) {
             generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
             generateBtn.disabled = true;
         }
         
-        // 🎯 TENTAR BACKEND (ignora se falhar)
-        let backendResult = null;
-        try {
-            const response = await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    action: 'createDocument',
-                    userEmail: currentUser.email,
-                    userName: currentUser.name,
-                    documentType: documentType,
-                    schoolName: formData["Nome da Escola"],
-                    formData: formData
-                })
-            });
-            console.log('✅ Backend contactado (modo no-cors)');
-        } catch (backendError) {
-            console.log('⚠️ Backend offline, usando fallback');
+        // 🎯 USAR NOVA FUNÇÃO callBackend
+        const result = await callBackend('createDocument', {
+            userEmail: currentUser.email,
+            userName: currentUser.name,
+            documentType: documentType,
+            schoolName: formData["Nome da Escola"],
+            formData: formData
+        });
+        
+        if (result && result.success) {
+            mostrarModalComLinks(result, formData["Nome da Escola"], documentType);
+        } else {
+            const errorMsg = result?.error || 'Erro desconhecido';
+            mostrarModalErro(errorMsg, formData["Nome da Escola"], documentType);
         }
-        
-        // 🎯 SEMPRE MOSTRAR SUCESSO (com fallback)
-        const resultadoFallback = {
-            success: true,
-            message: "✅ Documento processado!",
-            links: {
-                folder: await obterLinkEspecificoUsuario(currentUser.email)
-            },
-            fileNames: {
-                doc: `${getDocumentName(documentType)}_${formData["Nome da Escola"] || "Documento"}`,
-                pdf: `${getDocumentName(documentType)}_${formData["Nome da Escola"] || "Documento"}.pdf`
-            }
-        };
-        
-        mostrarModalComLinks(resultadoFallback, formData["Nome da Escola"], documentType);
         
     } catch (error) {
         console.error('❌ Erro na geração:', error);
-        mostrarModalErro("Documento processado localmente. O sistema salvará no backend quando disponível.", formData["Nome da Escola"], documentType);
+        mostrarModalErro("Erro de conexão. Tente novamente.", formData["Nome da Escola"], documentType);
         
     } finally {
-        // Restaurar botão
         if (generateBtn && originalContent) {
             generateBtn.innerHTML = originalContent;
             generateBtn.disabled = false;
         }
     }
 }
+
+// ================================
+// FUNÇÕES DO MODAL (MANTIDAS)
+// ================================
+
 function configurarEventosModal() {
     const closeModal = document.getElementById('closeModal');
     const newDocument = document.getElementById('newDocument');
@@ -1217,7 +1179,6 @@ function configurarEventosModal() {
     if (newDocument) {
         newDocument.addEventListener('click', () => {
             modal.classList.remove('show');
-            // Limpar formulário para novo documento
             document.getElementById('documentForm').reset();
             validarFormulario();
         });
@@ -1230,7 +1191,6 @@ function configurarEventosModal() {
         });
     }
     
-    // Fechar modal ao clicar fora
     if (modal) {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
@@ -1240,7 +1200,6 @@ function configurarEventosModal() {
     }
 }
 
-// 🎯 FUNÇÃO CORRIGIDA: MOSTRAR MODAL COM LINKS
 function mostrarModalComLinks(resultado, nomeEscola, documentType) {
     console.log('🎯 Mostrando modal com links...', resultado);
     
@@ -1255,19 +1214,16 @@ function mostrarModalComLinks(resultado, nomeEscola, documentType) {
         return;
     }
     
-    // Preencher informações básicas
     modalSchool.textContent = nomeEscola || 'Não informada';
     modalDocumentType.textContent = getDocumentName(documentType);
     modalStatus.textContent = "Processado com sucesso";
     modalStatus.style.color = "var(--success)";
     
-    // 🎯 VERIFICAR SE TEM LINKS VÁLIDOS
     const links = resultado.links || {};
     const fileNames = resultado.fileNames || {};
     
     let linksHTML = '';
     
-    // 🎯 CABEÇALHO INFORMATIVO
     linksHTML += `
         <div class="info-message">
             <i class="fas fa-check-circle"></i>
@@ -1275,7 +1231,6 @@ function mostrarModalComLinks(resultado, nomeEscola, documentType) {
         </div>
     `;
     
-    // 🎯 LINK DO DOC (Word)
     if (links.doc) {
         const downloadUrl = links.doc.replace('/edit', '/export?format=docx');
         
@@ -1300,7 +1255,6 @@ function mostrarModalComLinks(resultado, nomeEscola, documentType) {
         `;
     }
     
-    // 🎯 LINK DO PDF
     if (links.pdf) {
         const downloadUrl = links.pdf.replace('/view', '?export=download');
         
@@ -1325,7 +1279,6 @@ function mostrarModalComLinks(resultado, nomeEscola, documentType) {
         `;
     }
     
-    // 🎯 LINK DA PASTA DO USUÁRIO
     if (links.folder) {
         linksHTML += `
             <div class="link-item folder-link highlighted">
@@ -1348,7 +1301,6 @@ function mostrarModalComLinks(resultado, nomeEscola, documentType) {
         `;
     }
     
-    // 🎯 MENSAGEM DE SUCESSO
     linksHTML += `
         <div class="success-message">
             <i class="fas fa-check"></i>
@@ -1357,14 +1309,11 @@ function mostrarModalComLinks(resultado, nomeEscola, documentType) {
     `;
     
     resultLinks.innerHTML = linksHTML;
-    
-    // Mostrar modal
     modal.classList.add('show');
     
     console.log('✅ Modal mostrado com links');
 }
 
-// 🎯 FUNÇÃO: MODAL DE ERRO
 function mostrarModalErro(mensagemErro, nomeEscola, documentType) {
     console.log('❌ Mostrando modal de erro...');
     
@@ -1379,13 +1328,11 @@ function mostrarModalErro(mensagemErro, nomeEscola, documentType) {
         return;
     }
     
-    // Preencher informações básicas
     modalSchool.textContent = nomeEscola || 'Não informada';
     modalDocumentType.textContent = getDocumentName(documentType);
     modalStatus.textContent = "Erro no processamento";
     modalStatus.style.color = "var(--danger)";
     
-    // 🎯 HTML PARA ERRO
     resultLinks.innerHTML = `
         <div class="error-message-modal">
             <div class="error-icon">
@@ -1408,7 +1355,6 @@ function mostrarModalErro(mensagemErro, nomeEscola, documentType) {
         </div>
     `;
     
-    // Mostrar modal
     modal.classList.add('show');
 }
 
@@ -1436,7 +1382,7 @@ window.selecionarDocumento = selecionarDocumento;
 window.mostrarTela = mostrarTela;
 window.fazerLogout = fazerLogout;
 
-// 🎯 FUNÇÃO DE DEBUG PARA VERIFICAR LOGIN
+// 🎯 FUNÇÃO DE DEBUG
 function debugLogin() {
     console.log('🔍 DEBUG LOGIN:');
     console.log('- currentUser:', currentUser);
@@ -1447,12 +1393,25 @@ function debugLogin() {
 
 window.debugLogin = debugLogin;
 
-console.log('🎯 SISTEMA CARREGADO - VERSÃO 5.0 COM AUTENTICAÇÃO GOOGLE COMPLETA!');
+// 🎯 TESTE DO BACKEND
+async function testBackendConnection() {
+    console.log('🧪 Testando conexão com backend...');
+    const result = await callBackend('test');
+    console.log('📡 Resultado do teste:', result);
+    return result;
+}
 
+window.testBackendConnection = testBackendConnection;
 
+console.log('🎯 SISTEMA CARREGADO - VERSÃO 6.0 SEM PROBLEMAS DE CORS!');
 
-
-
-
-
-
+// 🎯 TESTE AUTOMÁTICO AO CARREGAR
+setTimeout(() => {
+    testBackendConnection().then(result => {
+        if (result && result.success) {
+            console.log('🚀 Sistema totalmente operacional!');
+        } else {
+            console.log('⚠️ Backend offline, usando modo fallback');
+        }
+    });
+}, 2000);
