@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reset do Sistema</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 50px; 
+            background: linear-gradient(135deg, #1E3A8A 0%, #DB2777 100%);
+            color: white;
+        }
+        button { 
+            padding: 15px 30px; 
+            font-size: 18px; 
+            margin: 10px; 
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+        }
+        .success { background: #10B981; color: white; }
+        .warning { background: #F59E0B; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🔧 RESET DO SISTEMA SUPERVISÃO</h1>
+    <p>Este reset vai limpar TODO o cache e recarregar o sistema limpo.</p>
+    
+    <button class="warning" onclick="resetCompleto()">RESET COMPLETO</button>
+    <br>
+    <button class="success" onclick="voltarParaApp()">VOLTAR PARA O APP</button>
+
+    <div id="status" style="margin-top: 20px;"></div>
+
+    <script>
+        function resetCompleto() {
+            const status = document.getElementById('status');
+            status.innerHTML = '🧹 Limpando...';
+            
+            // Limpar TUDO
+            localStorage.clear();
+            sessionStorage.clear();
+            
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => registration.unregister());
+                });
+            }
+            
+            caches.keys().then(cacheNames => {
+                cacheNames.forEach(cacheName => caches.delete(cacheName));
+            });
+            
+            status.innerHTML = '✅ Cache limpo! Recarregando...';
+            
+            setTimeout(() => {
+                window.location.href = 'index.html?reset=' + Date.now();
+            }, 2000);
+        }
+        
+        function voltarParaApp() {
+            window.location.href = 'index.html?nocache=' + Date.now();
+        }
+    </script>
+</body>
+</html>

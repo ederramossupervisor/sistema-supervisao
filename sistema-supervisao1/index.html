@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supervisão - Sistema de Documentos</title>
+    <meta name="description" content="Sistema de geração de documentos para supervisão educacional">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#1E3A8A">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Supervisão">
+    <link rel="apple-touch-icon" href="icons/icon-180x180.png">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icons/icon-192x192.png">
+    
+    <!-- Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Fontes -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+ <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Carregando Sistema Supervisão...</p>
+        </div>
+    </div>
+
+<!-- Header -->
+<header>
+    <div class="container">
+        <div class="header-content">
+            <!-- 🎯 TÍTULO NO CENTRO -->
+            <div class="header-title">
+                <div class="title-content">
+                    <i class="fas fa-file-contract"></i>
+                    <h1>Supervisão - SRE Afonso Cláudio</h1>
+                </div>
+            </div>
+            
+            <!-- 🎯 MENU NO CANTO DIREITO -->
+            <nav class="nav-menu" id="navMenu" style="display: none;">
+                <button id="menuButton" class="btn-config">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <div class="nav-links">
+                    <button id="configButton" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        Configuração
+                    </button>
+                    <button id="logoutButton" class="nav-link">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Sair
+                    </button>
+                </div>
+            </nav>
+            
+            <!-- 🎯 USUÁRIO NO CANTO DIREITO -->
+            <div class="user-info" id="userInfo">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span id="userName">Visitante</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+    <!-- Main Content -->
+    <main>
+        <div class="container">
+            <!-- Tela de Login -->
+<!-- Tela de Login -->
+<div id="loginScreen" class="screen active">
+    <div class="card login-card">
+        <div class="login-header">
+            <i class="fas fa-file-contract"></i>
+            <h1>Sistema Supervisão</h1>
+        </div>
+        <p class="login-subtitle">Geração automatizada de documentos educacionais</p>
+        
+        <!-- 🎯 SUBSTITUA O FORMULÁRIO POR ESTE BLOCO GOOGLE -->
+        <div class="google-login-section">
+            [código Google acima]
+        </div>
+        
+        <div class="login-info">
+            <p><i class="fas fa-info-circle"></i> Use seu email @educador.edu.es.gov.br ou @edu.es.gov.br</p>
+        </div>
+    </div>
+</div>
+
+            <!-- Tela Principal -->
+            <div id="mainScreen" class="screen">
+                <div class="welcome-section">
+                    <h1>Olá, <span id="welcomeName">Supervisor</span>!</h1>
+                    <p>Selecione o tipo de documento que deseja gerar</p>
+                </div>
+                
+                <div class="document-grid" id="documentGrid">
+                    <!-- Documentos serão carregados via JavaScript -->
+                </div>
+            </div>
+
+            <!-- Tela de Configuração -->
+            <div id="configScreen" class="screen">
+                <div class="config-header">
+                    <h1>Configuração do Supervisor</h1>
+                    <p>Configure suas informações e escolas sob sua responsabilidade</p>
+                </div>
+                
+                <div class="card">
+                    <h2><i class="fas fa-user-tie"></i> Dados Pessoais</h2>
+                    <form id="supervisorForm">
+                        <div class="form-group">
+                            <label for="supervisorName">Nome do Supervisor *</label>
+                            <input type="text" id="supervisorName" required placeholder="Digite seu nome completo">
+                            <small>Este nome será usado automaticamente nos documentos</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="supervisorSchools">Escolas sob Responsabilidade *</label>
+                            
+                            <!-- MULTISELECT MODERNO -->
+                            <div class="multiselect-container">
+                                <div class="multiselect-header">
+                                    <div class="search-container">
+                                        <i class="fas fa-search"></i>
+                                        <input type="text" 
+                                               id="schoolSearch" 
+                                               class="search-input" 
+                                               placeholder="Buscar escolas...">
+                                    </div>
+                                    <div class="selection-actions">
+                                        <span id="selectedCount" class="selected-count">0 selecionadas</span>
+                                        <div class="action-buttons">
+                                            <button type="button" class="action-btn select-all" onclick="selectAllSchools()">
+                                                <i class="fas fa-check-double"></i>
+                                                Todas
+                                            </button>
+                                            <button type="button" class="action-btn deselect-all" onclick="deselectAllSchools()">
+                                                <i class="fas fa-times"></i>
+                                                Nenhuma
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="schoolsMultiselect" class="multiselect-options">
+                                    <!-- Opções serão inseridas via JavaScript -->
+                                </div>
+                            </div>
+                            
+                            <small>Clique nas escolas para selecionar/deselecionar. Apenas as escolas selecionadas aparecerão nos formulários.</small>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">
+                                <i class="fas fa-save"></i>
+                                Salvar Configuração
+                            </button>
+                            <button type="button" class="btn-back" onclick="mostrarTela('mainScreen')">
+                                <i class="fas fa-arrow-left"></i>
+                                Voltar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tela de Formulário -->
+            <div id="formScreen" class="screen">
+                <div class="form-header">
+                    <div>
+                        <h1 id="formTitle">Preencha os Dados do Documento</h1>
+
+                    </div>
+                    <button id="backButton" class="btn-back">
+                        <i class="fas fa-arrow-left"></i>
+                        Voltar
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <form id="documentForm">
+                        <!-- Formulário dinâmico será inserido aqui -->
+                    </form>
+                    
+                    <div class="form-actions">
+                        <button id="generateButton" class="btn-generate" disabled>
+                            <i class="fas fa-file-pdf"></i>
+                            Gerar Documento
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+        <!-- 🎯 MODAL DE RESULTADO - VERSÃO COMPLETA E CORRIGIDA -->
+    <div id="resultModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-check-circle success-icon"></i> Documento Gerado com Sucesso!</h2>
+                <button id="closeModal" class="btn-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- 🎯 INFORMAÇÕES DO DOCUMENTO -->
+                <div class="result-info">
+                    <p><i class="fas fa-school"></i> Escola: <strong id="modalSchool">-</strong></p>
+                    <p><i class="fas fa-file-alt"></i> Tipo de Documento: <strong id="modalDocumentType">-</strong></p>
+                    <p><i class="fas fa-clock"></i> Status: <strong id="modalStatus">Processando...</strong></p>
+                </div>
+                
+                <!-- 🎯 LINKS DOS DOCUMENTOS -->
+                <div class="result-links" id="resultLinks">
+                    <!-- Os links serão inseridos aqui automaticamente -->
+                    <div class="loading-documents">
+                        <div class="loading-spinner-small"></div>
+                        <p>Gerando seus documentos...</p>
+                    </div>
+                </div>
+                
+                <!-- 🎯 BOTÕES DE AÇÃO -->
+                <div class="modal-actions">
+                    <button id="newDocument" class="btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Novo Documento
+                    </button>
+                    <button id="backToMain" class="btn-back">
+                        <i class="fas fa-home"></i>
+                        Tela Principal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; Sistema Supervisão - Desenvolvido por Eder Ramos</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+</body>
+</html>
