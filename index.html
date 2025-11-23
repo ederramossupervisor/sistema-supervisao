@@ -14,6 +14,9 @@
     <meta name="apple-mobile-web-app-title" content="Supervisão">
     <link rel="apple-touch-icon" href="icons/icon-180x180.png">
     
+    <!-- Google Sign-In -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
     <!-- CSS -->
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
@@ -24,7 +27,6 @@
     
     <!-- Fontes -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
- <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
     <!-- Loading Screen -->
@@ -35,94 +37,81 @@
         </div>
     </div>
 
-<!-- Header -->
-<header>
-    <div class="container">
-        <div class="header-content">
-            <!-- 🎯 TÍTULO NO CENTRO -->
-            <div class="header-title">
-                <div class="title-content">
-                    <i class="fas fa-file-contract"></i>
-                    <h1>Supervisão - SRE Afonso Cláudio</h1>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="header-title">
+                    <div class="title-content">
+                        <i class="fas fa-file-contract"></i>
+                        <h1>Supervisão - SRE Afonso Cláudio</h1>
+                    </div>
                 </div>
-            </div>
-            
-            <!-- 🎯 MENU NO CANTO DIREITO -->
-            <nav class="nav-menu" id="navMenu" style="display: none;">
-                <button id="menuButton" class="btn-config">
-                    <i class="fas fa-cog"></i>
-                </button>
-                <div class="nav-links">
-                    <button id="configButton" class="nav-link">
+                
+                <nav class="nav-menu" id="navMenu" style="display: none;">
+                    <button id="menuButton" class="btn-config">
                         <i class="fas fa-cog"></i>
-                        Configuração
                     </button>
-                    <button id="logoutButton" class="nav-link">
-                        <i class="fas fa-sign-out-alt"></i>
-                        Sair
-                    </button>
+                    <div class="nav-links">
+                        <button id="configButton" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            Configuração
+                        </button>
+                        <button id="logoutButton" class="nav-link">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Sair
+                        </button>
+                    </div>
+                </nav>
+                
+                <div class="user-info" id="userInfo">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <span id="userName">Visitante</span>
                 </div>
-            </nav>
-            
-            <!-- 🎯 USUÁRIO NO CANTO DIREITO -->
-            <div class="user-info" id="userInfo">
-                <div class="user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <span id="userName">Visitante</span>
             </div>
         </div>
-    </div>
-</header>
+    </header>
 
     <!-- Main Content -->
     <main>
         <div class="container">
             <!-- Tela de Login -->
-<!-- Tela de Login -->
-<div id="loginScreen" class="screen active">
-    <div class="card login-card">
-        <div class="login-header">
-            <i class="fas fa-file-contract"></i>
-            <h1>Sistema Supervisão</h1>
-        </div>
-        <p class="login-subtitle">Geração automatizada de documentos educacionais</p>
-        
-        <!-- 🎯 LOGIN GOOGLE - VERSÃO CORRIGIDA -->
-<div class="google-login-section">
-    <div id="g_id_onload"
-        data-client_id="725842703932-oe3v18cjvunvdarcdi7825rdgflqqqvj.apps.googleusercontent.com"
-        data-context="signin"
-        data-ux_mode="popup"
-        data-callback="handleGoogleSignIn"
-        data-auto_prompt="false">
-    </div>
+            <div id="loginScreen" class="screen active">
+                <div class="card login-card">
+                    <div class="login-header">
+                        <i class="fas fa-file-contract"></i>
+                        <h1>Sistema Supervisão</h1>
+                    </div>
+                    <p class="login-subtitle">Geração automatizada de documentos educacionais</p>
+                    
+                    <!-- 🎯 LOGIN GOOGLE -->
+                    <div class="google-login-section">
+                        <div id="g_id_onload"
+                            data-client_id="725842703932-oe3v18cjvunvdarcdi7825rdgflqqqvj.apps.googleusercontent.com"
+                            data-context="signin"
+                            data-ux_mode="popup"
+                            data-callback="handleGoogleAuth"
+                            data-auto_prompt="false">
+                        </div>
 
-    <div class="g_id_signin"
-        data-type="standard"
-        data-shape="rectangular"
-        data-theme="filled_blue"
-        data-text="signin_with"
-        data-size="large"
-        data-logo_alignment="left">
-    </div>
-</div>
+                        <div class="g_id_signin"
+                            data-type="standard"
+                            data-shape="rectangular"
+                            data-theme="filled_blue"
+                            data-text="signin_with"
+                            data-size="large"
+                            data-logo_alignment="left">
+                        </div>
+                    </div>
+                    
+                    <div class="login-info">
+                        <p><i class="fas fa-info-circle"></i> Use seu email @educador.edu.es.gov.br ou @edu.es.gov.br</p>
+                    </div>
+                </div>
+            </div>
 
-<script>
-// 🎯 FUNÇÃO GLOBAL PARA GOOGLE SIGN-IN
-function handleGoogleSignIn(response) {
-    console.log('🔐 Google Sign-In Response:', response);
-    
-    if (response.credential) {
-        // 🎯 CHAMAR FUNÇÃO DO SEU SCRIPT
-        if (typeof handleGoogleAuth === 'function') {
-            handleGoogleAuth(response);
-        } else {
-            console.error('❌ handleGoogleAuth não encontrado');
-        }
-    }
-}
-</script>
             <!-- Tela Principal -->
             <div id="mainScreen" class="screen">
                 <div class="welcome-section">
@@ -206,7 +195,6 @@ function handleGoogleSignIn(response) {
                 <div class="form-header">
                     <div>
                         <h1 id="formTitle">Preencha os Dados do Documento</h1>
-
                     </div>
                     <button id="backButton" class="btn-back">
                         <i class="fas fa-arrow-left"></i>
@@ -230,7 +218,7 @@ function handleGoogleSignIn(response) {
         </div>
     </main>
 
-        <!-- 🎯 MODAL DE RESULTADO - VERSÃO COMPLETA E CORRIGIDA -->
+    <!-- 🎯 MODAL DE RESULTADO -->
     <div id="resultModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -241,23 +229,19 @@ function handleGoogleSignIn(response) {
             </div>
             
             <div class="modal-body">
-                <!-- 🎯 INFORMAÇÕES DO DOCUMENTO -->
                 <div class="result-info">
                     <p><i class="fas fa-school"></i> Escola: <strong id="modalSchool">-</strong></p>
                     <p><i class="fas fa-file-alt"></i> Tipo de Documento: <strong id="modalDocumentType">-</strong></p>
                     <p><i class="fas fa-clock"></i> Status: <strong id="modalStatus">Processando...</strong></p>
                 </div>
                 
-                <!-- 🎯 LINKS DOS DOCUMENTOS -->
                 <div class="result-links" id="resultLinks">
-                    <!-- Os links serão inseridos aqui automaticamente -->
                     <div class="loading-documents">
                         <div class="loading-spinner-small"></div>
                         <p>Gerando seus documentos...</p>
                     </div>
                 </div>
                 
-                <!-- 🎯 BOTÕES DE AÇÃO -->
                 <div class="modal-actions">
                     <button id="newDocument" class="btn-primary">
                         <i class="fas fa-plus"></i>
@@ -281,8 +265,15 @@ function handleGoogleSignIn(response) {
 
     <!-- Scripts -->
     <script src="script.js"></script>
+    
+    <script>
+        // 🎯 FUNÇÃO GLOBAL PARA GOOGLE AUTH
+        function handleGoogleAuth(response) {
+            console.log('🔐 Google Auth recebido:', response);
+            if (typeof handleGoogleSignIn === 'function') {
+                handleGoogleSignIn(response);
+            }
+        }
+    </script>
 </body>
-
 </html>
-
-
