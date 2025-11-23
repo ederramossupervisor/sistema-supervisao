@@ -1499,4 +1499,33 @@ footer {
         padding: 12px;
     }
 }
+/* 🎯 CORREÇÃO DO BOTÃO GOOGLE */
+#googleSignInBtn {
+    min-height: 40px !important;
+    height: auto !important;
+    overflow: visible !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
 
+/* Garantir que o iframe interno tenha altura */
+#googleSignInBtn iframe {
+    height: 40px !important;
+    min-height: 40px !important;
+}
+
+/* 🎯 CORREÇÃO DA SEÇÃO DE LOGIN */
+.google-login-section {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 2rem 0;
+}
+
+/* Forçar visibilidade do container do Google */
+.g_id_signin {
+    min-height: 40px !important;
+    height: auto !important;
+}
