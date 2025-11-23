@@ -1,18 +1,15 @@
-// 🎯 SISTEMA SUPERVISÃO - VERSÃO 5.0 - SEM FORMS
-console.log('🎯 INICIANDO SISTEMA SUPERVISÃO - VERSÃO 5.0 SEM FORMS');
+// 🎯 SISTEMA SUPERVISÃO - VERSÃO 5.0 - COM AUTENTICAÇÃO GOOGLE COMPLETA
+console.log('🎯 INICIANDO SISTEMA SUPERVISÃO - VERSÃO 5.0 COM GOOGLE AUTH');
 
 // URL do seu Google Apps Script
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx6SMBW1SmCxLO4sE40-qfCA5l1oco0jCj5A-59dZkI4V0F4Dxs4LcyIQaXzGM5XLak/exec"
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx6SMBW1SmCxLO4sE40-qfCA5l1oco0jCj5A-59dZkI4V0F4Dxs4LcyIQaXzGM5XLak/exec";
 const CLIENT_ID = "725842703932-oe3v18cjvunvdarcdi7825rdgflqqqvj.apps.googleusercontent.com";
-// 🎯 FUNÇÃO GLOBAL PARA GOOGLE AUTH - ADICIONE ESTA FUNÇÃO
-function handleGoogleAuth(response) {
-    console.log('🔐 Google Auth recebido:', response);
-    handleGoogleSignIn(response);
-}
+
 // Estados globais
 let currentUser = null;
 let supervisorConfig = null;
 let currentDocumentType = null;
+
 // Dados completos das escolas para preenchimento automático
 const ESCOLAS_DATA_FRONTEND = {
     "CEEFMTI AFONSO CLÁUDIO": { municipio: "Afonso Cláudio", diretor: "Allan Dyoni Dehete Many" },
@@ -275,9 +272,6 @@ function iniciarSistema() {
 function configurarEventos() {
     console.log('🔧 Configurando eventos...');
     
-    // 🎯 LOGIN GOOGLE CONFIGURADO
-console.log('✅ Login Google configurado');
-    
     // 🎯 MENU DE NAVEGAÇÃO
     const menuBtn = document.getElementById('menuButton');
     const configBtn = document.getElementById('configButton');
@@ -285,7 +279,7 @@ console.log('✅ Login Google configurado');
     
     if (menuBtn) menuBtn.addEventListener('click', toggleMenu);
     if (configBtn) configBtn.addEventListener('click', () => mostrarTela('configScreen'));
-    if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+    if (logoutBtn) logoutBtn.addEventListener('click', fazerLogout);
     
     // 🎯 FORMULÁRIO DE CONFIGURAÇÃO
     const supervisorForm = document.getElementById('supervisorForm');
@@ -303,159 +297,130 @@ console.log('✅ Login Google configurado');
     
     // 🎯 CONFIGURAR EVENTOS DO MODAL
     configurarEventosModal();
+    
+    // 🎯 INICIALIZAR GOOGLE SIGN-IN
+    if (typeof google !== 'undefined' && google.accounts) {
+        initializeGoogleSignIn();
+    } else {
+        // Carregar script do Google se não estiver disponível
+        loadGoogleSignInScript();
+    }
 }
-// 🎯 NOVA FUNÇÃO: LOGIN COM DADOS DO FORMULÁRIO
-function fazerLoginComDados(nome, email) {
-    console.log('🔐 FAZENDO LOGIN COM DADOS:', { nome, email });
+
+// ================================
+// 🎯 AUTENTICAÇÃO GOOGLE - FUNÇÕES COMPLETAS
+// ================================
+
+// 🎯 CONFIGURAÇÃO GOOGLE SIGN-IN
+function initializeGoogleSignIn() {
+    console.log('🔐 Inicializando Google Sign-In...');
     
-    // 🎯 DADOS DO USUÁRIO
-    currentUser = {
-        name: nome,
-        email: email
-    };
-    
-    console.log('📝 Salvando usuário:', currentUser);
-    
-    // 🎯 SALVAR NO LOCALSTORAGE
     try {
-        localStorage.setItem('supervisionUser', JSON.stringify(currentUser));
-        console.log('💾 Usuário salvo no localStorage');
+        google.accounts.id.initialize({
+            client_id: CLIENT_ID,
+            callback: handleGoogleSignIn,
+            context: 'signin',
+            ux_mode: 'popup', // Mudado para popup para melhor controle
+            auto_select: false
+        });
+        
+        // 🎯 CONFIGURAR BOTÃO PERSONALIZADO
+        const googleSignInBtn = document.getElementById('googleSignInBtn');
+        if (googleSignInBtn) {
+            google.accounts.id.renderButton(
+                googleSignInBtn,
+                {
+                    type: 'standard',
+                    theme: 'filled_blue',
+                    size: 'large',
+                    text: 'signin_with',
+                    shape: 'rectangular',
+                    logo_alignment: 'left'
+                }
+            );
+        }
+        
+        // 🎯 OFERECER ONE-TAP SE TIVER COOKIES (apenas se não estiver logado)
+        if (!localStorage.getItem('googleToken')) {
+            google.accounts.id.prompt();
+        }
+        
+        console.log('✅ Google Sign-In inicializado');
     } catch (error) {
-        console.error('❌ Erro ao salvar:', error);
-        alert('Erro ao salvar dados. Tente novamente.');
-        return;
+        console.error('❌ Erro ao inicializar Google Sign-In:', error);
     }
-    
-    // 🎯 ATUALIZAR INTERFACE
-    mostrarMenu();
-    atualizarInterfaceUsuario();
-    
-    // 🎯 MUDAR PARA TELA PRINCIPAL
-    const mainScreen = document.getElementById('mainScreen');
-    const loginScreen = document.getElementById('loginScreen');
-    
-    if (mainScreen && loginScreen) {
-        loginScreen.classList.remove('active');
-        mainScreen.classList.add('active');
-        console.log('✅ Tela principal ativada!');
-    }
-    
-    // 🎯 CARREGAR DOCUMENTOS
-    carregarDocumentos();
-    
-    console.log('✅ LOGIN CONCLUÍDO COM SUCESSO!');
-    
-    // 🎯 SCROLL PARA O TOPO
-    window.scrollTo(0, 0);
 }
 
-function configurarEventosModal() {
-    const closeModal = document.getElementById('closeModal');
-    const newDocument = document.getElementById('newDocument');
-    const backToMain = document.getElementById('backToMain');
-    const modal = document.getElementById('resultModal');
-    
-    if (closeModal) {
-        closeModal.addEventListener('click', () => {
-            modal.classList.remove('show');
-        });
-    }
-    
-    if (newDocument) {
-        newDocument.addEventListener('click', () => {
-            modal.classList.remove('show');
-            // Limpar formulário para novo documento
-            document.getElementById('documentForm').reset();
-            validarFormulario();
-        });
-    }
-    
-    if (backToMain) {
-        backToMain.addEventListener('click', () => {
-            modal.classList.remove('show');
-            mostrarTela('mainScreen');
-        });
-    }
-    
-    // Fechar modal ao clicar fora
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            modal.classList.remove('show');
-        }
-    });
-}
-
-function verificarLogin() {
-    // 🎯 PRIMEIRO: Verificar se tem token Google
-    const googleToken = localStorage.getItem('googleToken');
-    
-    if (googleToken) {
-        console.log('🔐 Token Google encontrado, validando...');
-        validateWithBackend(googleToken);
-        return;
-    }
-    
-    // 🎯 DEPOIS: Verificar login antigo (para compatibilidade)
-    const user = localStorage.getItem('supervisionUser');
-    if (user) {
-        try {
-            currentUser = JSON.parse(user);
-            console.log('✅ Usuário já logado (sistema antigo):', currentUser.name);
-            carregarConfiguracao();
-            mostrarMenu();
-            atualizarInterfaceUsuario();
-            mostrarTela('mainScreen');
-            carregarDocumentos();
-        } catch (e) {
-            console.error('❌ Erro ao carregar usuário:', e);
-            localStorage.removeItem('supervisionUser');
-        }
-    }
-}
-// 🎯 FUNÇÕES DE AUTENTICAÇÃO GOOGLE
+// 🎯 FUNÇÃO PRINCIPAL DE AUTENTICAÇÃO
 function handleGoogleSignIn(response) {
     console.log('🔐 Resposta do Google Sign-In:', response);
     
-    const credential = response.credential;
-    
-    // 🎯 VALIDAR TOKEN COM BACKEND
-    validateWithBackend(credential);
+    if (response.credential) {
+        validateWithBackend(response.credential);
+    } else {
+        console.error('❌ Credencial não recebida');
+        alert('Erro na autenticação. Tente novamente.');
+    }
 }
 
+// 🎯 FUNÇÃO CORRIGIDA - VALIDAÇÃO COM BACKEND
 async function validateWithBackend(credential) {
     try {
         console.log('🔄 Validando token com backend...');
         
-        // 🎯 DECODIFICAR TOKEN JWT NO FRONTEND (SEM CORS)
-        const payload = JSON.parse(atob(credential.split('.')[1]));
-        console.log('📧 Email do token:', payload.email);
+        const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                action: 'validateToken',
+                token: credential
+            })
+        });
         
-        // 🎯 VALIDAR EMAIL INSTITUCIONAL NO FRONTEND
-        if (!payload.email.endsWith('@educador.edu.es.gov.br') && !payload.email.endsWith('@edu.es.gov.br')) {
-            alert('❌ Apenas emails institucionais são permitidos');
-            return;
+        const result = await response.json();
+        
+        if (result.success) {
+            handleSuccessfulLogin(result.user, credential);
+        } else {
+            alert('❌ ' + result.error);
+            // Limpar token inválido
+            localStorage.removeItem('googleToken');
         }
         
-        // 🎯 LOGIN BEM-SUCEDIDO (SEM VALIDAÇÃO BACKEND)
-        handleSuccessfulLogin({
-            email: payload.email,
-            name: payload.name || payload.email.split('@')[0],
-            picture: payload.picture || ''
-        }, credential);
-        
     } catch (error) {
-        console.error('❌ Erro na validação:', error);
+        console.error('❌ Erro na validação backend:', error);
         
-        // 🎯 FALLBACK: PERMITIR ACESSO MESMO COM ERRO
-        alert('⚠️ Login realizado! A validação completa estará disponível em breve.');
-        
-        handleSuccessfulLogin({
-            email: "usuario@educador.edu.es.gov.br",
-            name: "Supervisor",
-            picture: ""
-        }, credential);
+        // 🎯 FALLBACK: Validar no frontend
+        try {
+            const payload = JSON.parse(atob(credential.split('.')[1]));
+            console.log('📧 Email do token (fallback):', payload.email);
+            
+            // Validar domínio no frontend
+            if (!payload.email.endsWith('@educador.edu.es.gov.br') && !payload.email.endsWith('@edu.es.gov.br')) {
+                alert('❌ Apenas emails institucionais são permitidos');
+                localStorage.removeItem('googleToken');
+                return;
+            }
+            
+            handleSuccessfulLogin({
+                email: payload.email,
+                name: payload.name || payload.email.split('@')[0],
+                picture: payload.picture || '',
+                folderId: 'fallback-' + Date.now()
+            }, credential);
+            
+        } catch (fallbackError) {
+            console.error('❌ Erro no fallback:', fallbackError);
+            alert('Erro na autenticação. Tente novamente.');
+            localStorage.removeItem('googleToken');
+        }
     }
-}function handleSuccessfulLogin(user, credential) {
+}
+
+// 🎯 FUNÇÃO DE LOGIN BEM-SUCEDIDO (ATUALIZADA)
+function handleSuccessfulLogin(user, credential) {
     console.log('✅ Login bem-sucedido:', user);
     
     // 🎯 SALVAR DADOS DO USUÁRIO
@@ -463,6 +428,7 @@ async function validateWithBackend(credential) {
         name: user.name,
         email: user.email,
         picture: user.picture,
+        folderId: user.folderId,
         token: credential
     };
     
@@ -478,52 +444,118 @@ async function validateWithBackend(credential) {
     console.log('✅ Usuário logado com Google:', currentUser.name);
 }
 
-// 🎯 MODIFICAR função fazerLogin() existente
-function fazerLogin() {
-    console.log('🔐 Redirecionando para login Google...');
-    // Esta função agora será substituída pelo botão Google
+// 🎯 CARREGAR SCRIPT DO GOOGLE SIGN-IN
+function loadGoogleSignInScript() {
+    if (!document.querySelector('script[src*="accounts.google.com"]')) {
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+            console.log('✅ Google Sign-In script carregado');
+            initializeGoogleSignIn();
+        };
+        script.onerror = () => {
+            console.error('❌ Falha ao carregar Google Sign-In script');
+        };
+        document.head.appendChild(script);
+    }
 }
-function fazerLogin() {
-    console.log('🔐 FAZENDO LOGIN - VERSÃO CORRIGIDA...');
-    
-    // 🎯 DADOS DO USUÁRIO
-    currentUser = {
-        name: 'Eder Ramos',
-        email: 'eder.ramos@educador.edu.es.gov.br'
-    };
-    
-    console.log('📝 Salvando usuário:', currentUser);
-    
-    // 🎯 SALVAR NO LOCALSTORAGE
+
+// 🎯 VALIDAR TOKEN AO CARREGAR A PÁGINA
+async function validateTokenOnLoad(token) {
     try {
-        localStorage.setItem('supervisionUser', JSON.stringify(currentUser));
-        console.log('💾 Usuário salvo no localStorage');
+        const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'validateToken', token: token })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Token ainda válido, continuar logado
+            carregarConfiguracao();
+            mostrarMenu();
+            atualizarInterfaceUsuario();
+            mostrarTela('mainScreen');
+            carregarDocumentos();
+        } else {
+            // Token inválido, fazer logout
+            console.log('❌ Token inválido, fazendo logout...');
+            fazerLogout();
+        }
     } catch (error) {
-        console.error('❌ Erro ao salvar:', error);
+        console.error('❌ Erro na validação do token:', error);
+        // Continuar logado em caso de erro de rede (fallback)
+        carregarConfiguracao();
+        mostrarMenu();
+        atualizarInterfaceUsuario();
+        mostrarTela('mainScreen');
+        carregarDocumentos();
     }
-    
-    // 🎯 ATUALIZAR INTERFACE PRIMEIRO
-    mostrarMenu();
-    atualizarInterfaceUsuario();
-    
-    // 🎯 MUDAR PARA TELA PRINCIPAL
-    const mainScreen = document.getElementById('mainScreen');
-    const loginScreen = document.getElementById('loginScreen');
-    
-    if (mainScreen && loginScreen) {
-        loginScreen.classList.remove('active');
-        mainScreen.classList.add('active');
-        console.log('✅ Tela principal ativada!');
-    }
-    
-    // 🎯 CARREGAR DOCUMENTOS
-    carregarDocumentos();
-    
-    console.log('✅ LOGIN CONCLUÍDO COM SUCESSO!');
-    
-    // 🎯 SCROLL PARA O TOPO
-    window.scrollTo(0, 0);
 }
+
+function verificarLogin() {
+    // 🎯 PRIMEIRO: Verificar se tem token Google
+    const googleToken = localStorage.getItem('googleToken');
+    const userData = localStorage.getItem('supervisionUser');
+    
+    if (googleToken && userData) {
+        try {
+            currentUser = JSON.parse(userData);
+            console.log('✅ Usuário já logado:', currentUser.name);
+            
+            // 🎯 VALIDAR TOKEN NOVAMENTE
+            validateTokenOnLoad(googleToken);
+            
+        } catch (e) {
+            console.error('❌ Erro ao carregar usuário:', e);
+            fazerLogout();
+        }
+    } else {
+        console.log('🔐 Usuário não logado, aguardando autenticação...');
+        // Google Sign-In será inicializado em configurarEventos()
+    }
+}
+
+// 🎯 FUNÇÃO DE LOGOUT COMPLETA
+function fazerLogout() {
+    if (confirm('Tem certeza que deseja sair?')) {
+        // 🎯 LOGOUT DO GOOGLE
+        if (typeof google !== 'undefined' && google.accounts) {
+            google.accounts.id.disableAutoSelect();
+            if (currentUser?.email) {
+                google.accounts.id.revoke(currentUser.email, () => {
+                    console.log('🔐 Sessão Google revogada');
+                });
+            }
+        }
+        
+        // Limpar dados locais
+        currentUser = null;
+        supervisorConfig = null;
+        localStorage.removeItem('supervisionUser');
+        localStorage.removeItem('googleToken');
+        localStorage.removeItem('supervisorConfig');
+        
+        // Redirecionar para login
+        mostrarTela('loginScreen');
+        const navMenu = document.getElementById('navMenu');
+        if (navMenu) navMenu.style.display = 'none';
+        
+        // Recarregar a página para limpar completamente
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+        
+        console.log('👋 Usuário deslogado');
+    }
+}
+
+// ================================
+// FUNÇÕES DE INTERFACE
+// ================================
 
 function mostrarMenu() {
     const navMenu = document.getElementById('navMenu');
@@ -615,18 +647,6 @@ function toggleMenu() {
     const navLinks = document.querySelector('.nav-links');
     if (navLinks) {
         navLinks.classList.toggle('show');
-    }
-}
-
-function handleLogout() {
-    if (confirm('Tem certeza que deseja sair?')) {
-        currentUser = null;
-        supervisorConfig = null;
-        localStorage.removeItem('supervisionUser');
-        localStorage.removeItem('supervisorConfig');
-        mostrarTela('loginScreen');
-        document.getElementById('navMenu').style.display = 'none';
-        console.log('👋 Usuário deslogado');
     }
 }
 
@@ -1134,7 +1154,7 @@ function gerarNumeroOfício() {
     return `OF-${numero}`;
 }
 
-// 🎯 FUNÇÃO PRINCIPAL DE GERAÇÃO - VERSÃO SEM CORS
+// 🎯 FUNÇÃO PRINCIPAL DE GERAÇÃO - VERSÃO COMPLETA
 async function gerarDocumentoCompleto(documentType, formData) {
     console.log(`🎯 Gerando documento: ${documentType}`);
     
@@ -1148,24 +1168,39 @@ async function gerarDocumentoCompleto(documentType, formData) {
             generateBtn.disabled = true;
         }
         
-        // 🎯 SIMULAR SUCESSO (SEM BACKEND POR ENQUANTO)
-        const resultadoSimulado = {
-            success: true,
-            message: "✅ Documento gerado com sucesso!",
-            links: {
-                folder: "https://drive.google.com/drive/folders/1DuTA0XGKxuqZObxWr-Cc34_COAtdzhaV"
-            },
-            fileNames: {
-                doc: `${getDocumentName(documentType)}_${formData["Nome da Escola"] || "Documento"}`,
-                pdf: `${getDocumentName(documentType)}_${formData["Nome da Escola"] || "Documento"}.pdf`
-            }
+        // 🎯 PREPARAR DADOS PARA BACKEND
+        const payload = {
+            action: 'createDocument',
+            userEmail: currentUser.email,
+            userName: currentUser.name,
+            documentType: documentType,
+            schoolName: formData["Nome da Escola"],
+            formData: formData
         };
         
-        mostrarModalComLinks(resultadoSimulado, formData["Nome da Escola"], documentType);
+        console.log('📤 Enviando para backend:', payload);
+        
+        // 🎯 ENVIAR PARA BACKEND
+        const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log('✅ Documento gerado com sucesso:', result);
+            mostrarModalComLinks(result, formData["Nome da Escola"], documentType);
+        } else {
+            throw new Error(result.error || 'Erro na geração do documento');
+        }
         
     } catch (error) {
-        console.error('❌ Erro geral:', error);
-        mostrarModalErro("Sistema em ajustes. Tente novamente em alguns minutos.", formData["Nome da Escola"], documentType);
+        console.error('❌ Erro na geração:', error);
+        mostrarModalErro(error.message, formData["Nome da Escola"], documentType);
         
     } finally {
         // Restaurar botão
@@ -1175,107 +1210,48 @@ async function gerarDocumentoCompleto(documentType, formData) {
         }
     }
 }
-// 🎯 SOLUÇÃO ALTERNATIVA - LINK ESPECÍFICO POR USUÁRIO
-async function enviarViaFetchDireto_CORRIGIDO(payload, nomeEscola, documentType) {
-    console.log('🌐 SOLUÇÃO CORRIGIDA - Link específico por usuário');
+
+function configurarEventosModal() {
+    const closeModal = document.getElementById('closeModal');
+    const newDocument = document.getElementById('newDocument');
+    const backToMain = document.getElementById('backToMain');
+    const modal = document.getElementById('resultModal');
     
-    const userEmail = payload.userEmail;
-    
-    try {
-        // 🎯 ENVIAR PARA BACKEND (processamento em background)
-        await fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
+    if (closeModal) {
+        closeModal.addEventListener('click', () => {
+            modal.classList.remove('show');
         });
-        
-        console.log('✅ Backend notificado - processando em background');
-        
-        // 🎯 🆕 CORREÇÃO DEFINITIVA: LINK ESPECÍFICO POR EMAIL
-        const linkEspecifico = await obterLinkEspecificoUsuario(userEmail);
-        
-        const resultado = {
-            success: true,
-            message: "✅ Documento gerado com sucesso!",
-            links: {
-                folder: linkEspecifico // 🎯 LINK ESPECÍFICO DA JULIA
-            },
-            fileNames: {
-                doc: `${getDocumentName(documentType)}_${nomeEscola || "Documento"}`,
-                pdf: `${getDocumentName(documentType)}_${nomeEscola || "Documento"}.pdf`
-            },
-            userEmail: userEmail
-        };
-        
-        console.log('🔗 Link específico:', resultado.links.folder);
-        mostrarModalComLinks(resultado, nomeEscola, documentType);
-        
-    } catch (error) {
-        console.log('❌ Erro, usando fallback específico');
-        const linkFallback = await obterLinkEspecificoUsuario(userEmail);
-        
-        const resultadoFallback = {
-            success: true,
-            message: "📁 Acesse sua pasta pessoal:",
-            links: { folder: linkFallback },
-            fileNames: {
-                doc: `${getDocumentName(documentType)}_${nomeEscola || "Documento"}`,
-                pdf: `${getDocumentName(documentType)}_${nomeEscola || "Documento"}.pdf`
-            },
-            userEmail: userEmail
-        };
-        
-        mostrarModalComLinks(resultadoFallback, nomeEscola, documentType);
     }
-}
-
-// 🎯 🆕 FUNÇÃO PARA OBTER LINK ESPECÍFICO
-async function obterLinkEspecificoUsuario(userEmail) {
-    // 🎯 MAPA DE LINKS ESPECÍFICOS POR USUÁRIO
-    const linksUsuarios = {
-        // 🎯 JULIA - LINK ESPECÍFICO DELA
-        "julia.souza@educador.edu.es.gov.br": "https://drive.google.com/drive/folders/1kH_On3GYV_hmm25Hk-cYKHRl_LtMMrlM",
-        
-        // 🎯 OUTROS USUÁRIOS - ADICIONE CONFORME NECESSÁRIO
-        "caroliny.uhlig@educador.edu.es.gov.br": "https://drive.google.com/drive/folders/1DuTA0XGKxuqZObxWr-Cc34_COAtdzhaV",
-        "jonas.pagotto@edu.es.gov.br": "https://drive.google.com/drive/folders/1DuTA0XGKxuqZObxWr-Cc34_COAtdzhaV"
-    };
     
-    // 🎯 RETORNAR LINK ESPECÍFICO OU PADRAO
-    return linksUsuarios[userEmail] || "https://drive.google.com/drive/folders/1DuTA0XGKxuqZObxWr-Cc34_COAtdzhaV";
-}
-
-// 🎯 FUNÇÃO: CONSTRUIR LINK DA PASTA DO USUÁRIO NO FRONTEND (VERSÃO CORRIGIDA)
-async function construirLinkPastaUsuario(userEmail, nomeEscola, documentType) {
-    try {
-        console.log('🔗 Construindo link da pasta para:', userEmail);
-        
-        // 🎯 AGORA VAMOS USAR UMA ESTRATÉGIA DIFERENTE
-        // Como não podemos obter o ID dinamicamente no frontend,
-        // vamos criar um link "inteligente" que leva para a estrutura correta
-        
-        const baseUrl = "https://drive.google.com/drive/folders/";
-        
-        // 🎯 ESTRATÉGIA: Link para pasta principal + instrução visual
-        // O usuário verá TODAS as pastas, mas só conseguirá abrir a dele
-        // (devido às permissões que configuramos no Apps Script)
-        
-        const pastaPrincipalId = "1DuTA0XGKxuqZObxWr-Cc34_COAtdzhaV";
-        const linkComInstrucao = baseUrl + pastaPrincipalId;
-        
-        console.log('🔗 Link com estrutura:', linkComInstrucao);
-        
-        return linkComInstrucao;
-        
-    } catch (error) {
-        console.error('❌ Erro ao construir link:', error);
-        return "https://drive.google.com/drive/folders/1DuTA0XGKxuqZObxWr-Cc34_COAtdzhaV";
+    if (newDocument) {
+        newDocument.addEventListener('click', () => {
+            modal.classList.remove('show');
+            // Limpar formulário para novo documento
+            document.getElementById('documentForm').reset();
+            validarFormulario();
+        });
+    }
+    
+    if (backToMain) {
+        backToMain.addEventListener('click', () => {
+            modal.classList.remove('show');
+            mostrarTela('mainScreen');
+        });
+    }
+    
+    // Fechar modal ao clicar fora
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('show');
+            }
+        });
     }
 }
-// 🎯 FUNÇÃO CORRIGIDA: MOSTRAR MODAL COM LINKS ESPECÍFICOS
+
+// 🎯 FUNÇÃO CORRIGIDA: MOSTRAR MODAL COM LINKS
 function mostrarModalComLinks(resultado, nomeEscola, documentType) {
-    console.log('🎯 Mostrando modal com links específicos...', resultado);
+    console.log('🎯 Mostrando modal com links...', resultado);
     
     const modal = document.getElementById('resultModal');
     const modalSchool = document.getElementById('modalSchool');
@@ -1310,82 +1286,76 @@ function mostrarModalComLinks(resultado, nomeEscola, documentType) {
     
     // 🎯 LINK DO DOC (Word)
     if (links.doc) {
-    const downloadUrl = links.doc.replace('/edit', '/export?format=docx');
-    
-    linksHTML += `
-        <div class="link-item doc-link highlighted">
-            <div class="link-icon">
-                <i class="fas fa-file-word"></i>
+        const downloadUrl = links.doc.replace('/edit', '/export?format=docx');
+        
+        linksHTML += `
+            <div class="link-item doc-link highlighted">
+                <div class="link-icon">
+                    <i class="fas fa-file-word"></i>
+                </div>
+                <div class="link-info">
+                    <strong>${fileNames.doc || 'Documento Word'}</strong>
+                    <small>Documento editável para revisão</small>
+                </div>
+                <div class="link-actions">
+                    <a href="${links.doc}" target="_blank" class="btn-link compact view" title="Abrir Documento">
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                    <a href="${downloadUrl}" class="btn-link compact download" download="${fileNames.doc || 'documento'}.docx" title="Baixar DOC">
+                        <i class="fas fa-download"></i>
+                    </a>
+                </div>
             </div>
-            <div class="link-info">
-                <strong>${fileNames.doc || 'Documento Word'}</strong>
-                <small>Documento editável para revisão</small>
-            </div>
-            <div class="link-actions">
-                <a href="${links.doc}" target="_blank" class="btn-link compact view" title="Abrir Documento">
-                    <i class="fas fa-external-link-alt"></i>
-                </a>
-                <a href="${downloadUrl}" class="btn-link compact download" download="${fileNames.doc || 'documento'}.docx" title="Baixar DOC">
-                    <i class="fas fa-download"></i>
-                </a>
-            </div>
-        </div>
-    `;
-}
+        `;
+    }
     
     // 🎯 LINK DO PDF
     if (links.pdf) {
-    const downloadUrl = links.pdf.replace('/view', '?export=download');
-    
-    linksHTML += `
-        <div class="link-item pdf-link">
-            <div class="link-icon">
-                <i class="fas fa-file-pdf"></i>
+        const downloadUrl = links.pdf.replace('/view', '?export=download');
+        
+        linksHTML += `
+            <div class="link-item pdf-link">
+                <div class="link-icon">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <div class="link-info">
+                    <strong>${fileNames.pdf || 'Documento PDF'}</strong>
+                    <small>Versão para impressão e compartilhamento</small>
+                </div>
+                <div class="link-actions">
+                    <a href="${links.pdf}" target="_blank" class="btn-link compact view" title="Abrir PDF">
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                    <a href="${downloadUrl}" class="btn-link compact download" download="${fileNames.pdf || 'documento'}.pdf" title="Baixar PDF">
+                        <i class="fas fa-download"></i>
+                    </a>
+                </div>
             </div>
-            <div class="link-info">
-                <strong>${fileNames.pdf || 'Documento PDF'}</strong>
-                <small>Versão para impressão e compartilhamento</small>
+        `;
+    }
+    
+    // 🎯 LINK DA PASTA DO USUÁRIO
+    if (links.folder) {
+        linksHTML += `
+            <div class="link-item folder-link highlighted">
+                <div class="link-icon">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <div class="link-info">
+                    <strong>Sua Pasta Pessoal</strong>
+                    <small>Onde seus documentos foram salvos</small>
+                    <small style="color: #64748b; font-size: 0.8rem; margin-top: 5px;">
+                        📁 Acesso direto à sua pasta específica
+                    </small>
+                </div>
+                <div class="link-actions">
+                    <a href="${links.folder}" target="_blank" class="btn-link compact view" title="Abrir Minha Pasta">
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                </div>
             </div>
-            <div class="link-actions">
-                <a href="${links.pdf}" target="_blank" class="btn-link compact view" title="Abrir PDF">
-                    <i class="fas fa-external-link-alt"></i>
-                </a>
-                <a href="${downloadUrl}" class="btn-link compact download" download="${fileNames.pdf || 'documento'}.pdf" title="Baixar PDF">
-                    <i class="fas fa-download"></i>
-                </a>
-            </div>
-        </div>
-    `;
-}
-    
-    // 🎯 🎯🎯 LINK DA PASTA DO USUÁRIO (SEMPRE MOSTRAR)
-    const folderLink = links.folder || "https://drive.google.com/drive/folders/1DuTA0XGKxuqZObxWr-Cc34_COAtdzhaV";
-    
-    // 🎯 Extrair nome do usuário para mostrar na instrução
-    const userEmail = resultado.userEmail || currentUser?.email;
-    const nomeUsuario = userEmail ? userEmail.split('@')[0].split('.')
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ') : 'Seu nome';
-    
-    linksHTML += `
-    <div class="link-item folder-link highlighted">
-        <div class="link-icon">
-            <i class="fas fa-folder-open"></i>
-        </div>
-        <div class="link-info">
-            <strong>Sua Pasta Pessoal</strong>
-            <small>Onde seus documentos foram salvos</small>
-            <small style="color: #64748b; font-size: 0.8rem; margin-top: 5px;">
-                📁 Acesso direto à sua pasta específica
-            </small>
-        </div>
-        <div class="link-actions">
-            <a href="${folderLink}" target="_blank" class="btn-link compact view" title="Abrir Minha Pasta">
-                <i class="fas fa-external-link-alt"></i>
-            </a>
-        </div>
-    </div>
-`;
+        `;
+    }
     
     // 🎯 MENSAGEM DE SUCESSO
     linksHTML += `
@@ -1400,7 +1370,7 @@ function mostrarModalComLinks(resultado, nomeEscola, documentType) {
     // Mostrar modal
     modal.classList.add('show');
     
-    console.log('✅ Modal mostrado com links específicos');
+    console.log('✅ Modal mostrado com links');
 }
 
 // 🎯 FUNÇÃO: MODAL DE ERRO
@@ -1464,30 +1434,26 @@ function getDocumentName(documentType) {
     };
     return nomes[documentType] || "Documento";
 }
-// 🎯 FUNÇÃO DE DEBUG PARA VERIFICAR LOGIN
-function debugLogin() {
-    console.log('🔍 DEBUG LOGIN:');
-    console.log('- currentUser:', currentUser);
-    console.log('- localStorage:', localStorage.getItem('supervisionUser'));
-    console.log('- Telas ativas:', document.querySelectorAll('.screen.active'));
-}
 
-// Chame esta função no console do navegador para ver o que está acontecendo
-window.debugLogin = debugLogin;
 // ================================
-// CONFIGURAR EVENTOS GLOBAIS
+// FUNÇÕES GLOBAIS
 // ================================
 
 window.selectAllSchools = selectAllSchools;
 window.deselectAllSchools = deselectAllSchools;
 window.selecionarDocumento = selecionarDocumento;
 window.mostrarTela = mostrarTela;
+window.fazerLogout = fazerLogout;
 
+// 🎯 FUNÇÃO DE DEBUG PARA VERIFICAR LOGIN
+function debugLogin() {
+    console.log('🔍 DEBUG LOGIN:');
+    console.log('- currentUser:', currentUser);
+    console.log('- localStorage:', localStorage.getItem('supervisionUser'));
+    console.log('- googleToken:', localStorage.getItem('googleToken'));
+    console.log('- Telas ativas:', document.querySelectorAll('.screen.active'));
+}
 
-console.log('🎯 SISTEMA CARREGADO - VERSÃO 5.0 SEM FORMS!');
+window.debugLogin = debugLogin;
 
-
-
-
-
-
+console.log('🎯 SISTEMA CARREGADO - VERSÃO 5.0 COM AUTENTICAÇÃO GOOGLE COMPLETA!');
