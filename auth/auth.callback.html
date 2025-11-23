@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Processando Login - Sistema Supervisão</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 50px; 
+            background: linear-gradient(135deg, #1E3A8A 0%, #DB2777 100%);
+            color: white;
+        }
+        .spinner { 
+            width: 50px; 
+            height: 50px; 
+            border: 4px solid rgba(255,255,255,0.3); 
+            border-top: 4px solid white; 
+            border-radius: 50%; 
+            animation: spin 1s linear infinite; 
+            margin: 20px auto; 
+        }
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Processando Login...</h1>
+    <div class="spinner"></div>
+    <p>Estamos conectando você ao sistema.</p>
+
+    <script>
+        // 🎯 PROCESSAR TOKEN GOOGLE
+        function handleCredentialResponse(response) {
+            console.log('📨 Token recebido:', response.credential);
+            
+            // 🎯 SALVAR TOKEN E REDIRECIONAR
+            localStorage.setItem('googleToken', response.credential);
+            window.location.href = '../index.html';
+        }
+
+        // 🎯 INICIALIZAR E PROCESSAR LOGIN
+        window.onload = function() {
+            google.accounts.id.initialize({
+                client_id: '725842703932-oe3v18cjvunvdarcdi7825rdgflqqqvj.apps.googleusercontent.com',
+                callback: handleCredentialResponse
+            });
+            
+            // 🎯 TENTAR OBTER TOKEN DA URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const credential = urlParams.get('credential');
+            
+            if (credential) {
+                handleCredentialResponse({ credential: credential });
+            } else {
+                // 🎯 SE NÃO TIVER TOKEN, VOLTAR AO LOGIN
+                setTimeout(() => {
+                    window.location.href = '../index.html';
+                }, 3000);
+            }
+        };
+    </script>
+</body>
+</html>
