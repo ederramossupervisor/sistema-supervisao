@@ -2,7 +2,7 @@
 console.log('🎯 INICIANDO SISTEMA SUPERVISÃO - VERSÃO 6.0 SEM CORS');
 
 // URL do seu Google Apps Script (JÁ ATUALIZADA)
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzH4d2PI-9gEzhLF-Nquuy3bSIiYJJLiec5hB4HyuLxbvzb8KndpkWQqTxYGZeM7-o/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfvBnXJK3LDP7QYHdlZptVgJWfMeYa7RJtAbdCKC9_U3VQnt8yRQztf48lhP-8ZIMT/exec";
 const CLIENT_ID = "725842703932-oe3v18cjvunvdarcdi7825rdgflqqqvj.apps.googleusercontent.com";
 
 // Estados globais
@@ -1415,3 +1415,4 @@ setTimeout(() => {
         }
     });
 }, 2000);
+
