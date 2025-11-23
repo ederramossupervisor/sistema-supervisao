@@ -1390,3 +1390,72 @@ footer {
     padding: 1.5rem 0;
     margin-top: 3rem;
 }
+/* ========== 🎯 CORREÇÃO ESPECÍFICA DO CAMPO SUPERVISOR ========== */
+
+/* 🎯 CAMPO NOME DO SUPERVISOR PADRONIZADO */
+#supervisorName {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #E2E8F0;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    transition: var(--transition);
+    background: white;
+    color: var(--dark);
+    outline: none;
+}
+
+#supervisorName:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    transform: translateY(-1px);
+}
+
+#supervisorName:hover {
+    border-color: #CBD5E1;
+    transform: translateY(-1px);
+}
+
+#supervisorName::placeholder {
+    color: #9CA3AF;
+    font-weight: 400;
+    opacity: 1;
+    transition: var(--transition);
+}
+
+#supervisorName:focus::placeholder {
+    color: #6B7280;
+}
+
+/* 🎯 REMOVER ESTILOS ESPECÍFICOS PROBLEMÁTICOS */
+.form-group:has(#supervisorName)::before {
+    display: none !important; /* Remove ícone decorativo */
+}
+
+/* 🎯 GARANTIR QUE O LABEL FIQUE PADRONIZADO */
+.form-group label[for="supervisorName"] {
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+    color: var(--dark) !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* 🎯 REMOVER COMPORTAMENTOS ESPECÍFICOS ANTERIORES */
+#supervisorName:not(:focus):placeholder-shown {
+    background: white !important; /* Remove background especial */
+}
+
+/* 🎯 RESPONSIVIDADE DO CAMPO SUPERVISOR */
+@media (max-width: 768px) {
+    #supervisorName {
+        padding: 12px 14px;
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    #supervisorName {
+        padding: 12px;
+    }
+}
