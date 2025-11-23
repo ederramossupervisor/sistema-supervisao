@@ -515,6 +515,165 @@ iframe[src*="accounts.google.com"] {
     transform: none;
 }
 
+/* ========== 🎯 FORMULÁRIOS PADRONIZADOS ========== */
+
+/* Form Groups Padronizados */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--dark);
+    font-size: 0.95rem;
+}
+
+/* 🎯 CAMPO DE TEXTO PADRONIZADO */
+.form-field {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #E2E8F0;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    transition: var(--transition);
+    background: white;
+    color: var(--dark);
+    outline: none;
+}
+
+.form-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    transform: translateY(-1px);
+}
+
+.form-field:hover {
+    border-color: #CBD5E1;
+    transform: translateY(-1px);
+}
+
+.form-field[readonly] {
+    background: #f8f9fa !important;
+    border-color: #d1d5db !important;
+    color: #6b7280 !important;
+    cursor: not-allowed !important;
+}
+
+.form-field[readonly]:focus {
+    box-shadow: none !important;
+    border-color: #d1d5db !important;
+    transform: none !important;
+}
+
+/* 🎯 TEXTAREA PADRONIZADA */
+textarea.form-field {
+    resize: vertical;
+    min-height: 120px;
+    line-height: 1.5;
+    font-family: 'Poppins', sans-serif;
+}
+
+textarea.form-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+textarea.form-field:hover {
+    border-color: #CBD5E1;
+}
+
+/* 🎯 SELECT PADRONIZADO */
+select.form-field {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 16px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    padding-right: 50px;
+}
+
+select.form-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+select.form-field:hover {
+    border-color: #CBD5E1;
+}
+
+/* 🎯 INPUT DATE PADRONIZADO */
+input[type="date"].form-field {
+    cursor: pointer;
+    position: relative;
+}
+
+input[type="date"].form-field::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 3px;
+    margin-right: 2px;
+}
+
+input[type="date"].form-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+input[type="date"].form-field:hover {
+    border-color: #CBD5E1;
+}
+
+/* 🎯 PLACEHOLDER PADRONIZADO */
+.form-field::placeholder {
+    color: #9CA3AF;
+    font-weight: 400;
+    opacity: 1;
+    transition: var(--transition);
+}
+
+.form-field:focus::placeholder {
+    color: #6B7280;
+}
+
+/* Texto de ajuda */
+.form-group small {
+    display: block;
+    margin-top: 0.5rem;
+    color: #64748B;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+/* 🎯 FORM HEADER PADRONIZADO */
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.form-header h1 {
+    color: var(--dark);
+    font-size: 1.75rem;
+    margin: 0;
+}
+
+/* 🎯 FORM ACTIONS PADRONIZADOS */
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-start;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #E2E8F0;
+}
+
 /* ========== 🎯 PÁGINA DE CONFIGURAÇÃO DO SUPERVISOR ========== */
 
 /* Config Header */
@@ -536,47 +695,23 @@ iframe[src*="accounts.google.com"] {
     font-size: 1.1rem;
 }
 
-/* Form Groups Corrigidos */
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: var(--dark);
-}
-
-.form-group input[type="text"] {
-    width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e2e8f0;
-    border-radius: var(--radius);
-    font-size: 1rem;
-    transition: var(--transition);
-    background: white;
-}
-
-.form-group input[type="text"]:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-group small {
-    display: block;
-    margin-top: 0.5rem;
-    color: #64748B;
-    font-size: 0.8rem;
-}
-
 /* 🎯 MULTISELECT CORRIGIDO */
 .multiselect-container {
     border: 2px solid #e2e8f0;
     border-radius: var(--radius);
     background: white;
     overflow: hidden;
+    transition: var(--transition);
+}
+
+.multiselect-container:hover {
+    border-color: #CBD5E1;
+    transform: translateY(-1px);
+}
+
+.multiselect-container:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .multiselect-header {
@@ -598,18 +733,26 @@ iframe[src*="accounts.google.com"] {
     color: #64748B;
 }
 
+/* 🎯 SEARCH INPUT PADRONIZADO */
 .search-input {
     width: 100%;
-    padding: 10px 10px 10px 40px;
+    padding: 12px 16px 12px 40px;
     border: 2px solid #e2e8f0;
     border-radius: var(--radius);
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     transition: var(--transition);
+    background: white;
+    font-family: 'Poppins', sans-serif;
 }
 
 .search-input:focus {
     outline: none;
     border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.search-input:hover {
+    border-color: #CBD5E1;
 }
 
 .selection-actions {
@@ -726,16 +869,6 @@ iframe[src*="accounts.google.com"] {
     flex: 1;
     color: var(--dark);
     font-size: 0.9rem;
-}
-
-/* 🎯 FORM ACTIONS CORRIGIDOS */
-.form-actions {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-start;
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #e2e8f0;
 }
 
 /* 🎯 SCROLLBAR PERSONALIZADA */
@@ -1112,6 +1245,25 @@ iframe[src*="accounts.google.com"] {
     .form-actions {
         flex-direction: column;
     }
+    
+    /* Formulários responsivos */
+    .form-field {
+        padding: 12px 14px;
+        font-size: 16px;
+    }
+    
+    .form-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    select.form-field {
+        padding-right: 45px;
+        background-position: right 12px center;
+    }
+    
+    textarea.form-field {
+        min-height: 100px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1192,6 +1344,19 @@ iframe[src*="accounts.google.com"] {
         width: 45px;
         height: 45px;
         font-size: 1.3rem;
+    }
+    
+    /* Formulários mobile */
+    .form-field {
+        padding: 12px;
+    }
+    
+    .form-header h1 {
+        font-size: 1.25rem;
+    }
+    
+    .form-actions {
+        gap: 0.75rem;
     }
 }
 
