@@ -1852,4 +1852,39 @@ footer {
     .google-login-section {
         margin: 1.5rem 0;
     }
+
+}
+/* 🎯 CORREÇÃO CRÍTICA - VISIBILIDADE DAS TELAS */
+.screen.active {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+#mainScreen.active {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* 🎯 GARANTIR QUE OUTRAS TELAS FICAM ESCONDIDAS */
+.screen:not(.active) {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* 🎯 CORREÇÃO DO GRID DE DOCUMENTOS */
+.document-grid {
+    display: grid !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.document-card {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
