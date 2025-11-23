@@ -2,7 +2,7 @@
 console.log('🎯 INICIANDO SISTEMA SUPERVISÃO - VERSÃO 5.0 COM GOOGLE AUTH');
 
 // URL do seu Google Apps Script
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx6SMBW1SmCxLO4sE40-qfCA5l1oco0jCj5A-59dZkI4V0F4Dxs4LcyIQaXzGM5XLak/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbypJK4ZIKSmF6drLEZfcY7G8JOk01IOlr31Wqjdpg_ZgRYz1bkDWriEhVcwku5nL6tY/exec";
 const CLIENT_ID = "725842703932-oe3v18cjvunvdarcdi7825rdgflqqqvj.apps.googleusercontent.com";
 
 // Estados globais
@@ -1457,3 +1457,4 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO 5.0 COM AUTENTICAÇÃO GOOGLE COMPLETA!');
+
