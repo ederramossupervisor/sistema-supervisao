@@ -4,6 +4,15 @@ console.log('🎯 INICIANDO SISTEMA SUPERVISÃO - VERSÃO 5.0 SEM FORMS');
 // URL do seu Google Apps Script
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFcNbAJtA8DFnbteiIul5ZYC0zhHgyjuA0bPT-QJ_9DVrDSAucPH2yAo44jK6pjTdK/exec"
 const CLIENT_ID = "725842703932-oe3v18cjvunvdarcdi7825rdgflqqqvj.apps.googleusercontent.com";
+// 🎯 FUNÇÃO GLOBAL PARA GOOGLE AUTH - ADICIONE ESTA FUNÇÃO
+function handleGoogleAuth(response) {
+    console.log('🔐 Google Auth recebido:', response);
+    handleGoogleSignIn(response);
+}
+// Estados globais
+let currentUser = null;
+let supervisorConfig = null;
+let currentDocumentType = null;
 // Estados globais
 let currentUser = null;
 let supervisorConfig = null;
@@ -1479,4 +1488,5 @@ window.mostrarTela = mostrarTela;
 
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO 5.0 SEM FORMS!');
+
 
