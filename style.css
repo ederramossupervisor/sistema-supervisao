@@ -296,15 +296,31 @@ main {
     font-size: 1.1rem;
 }
 
-/* 🎯 LOGIN GOOGLE */
+/* 🎯 CORREÇÃO: BOTÃO GOOGLE CENTRALIZADO */
 .google-login-section {
     margin: 2rem 0;
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60px;
 }
 
-.google-login-section .g_id_signin {
-    margin: 0 auto;
-    display: inline-block;
+#googleSignInBtn {
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
+}
+
+/* 🎯 CORREÇÃO: GARANTIR CENTRALIZAÇÃO DO BOTÃO GOOGLE */
+.g_id_signin {
+    margin: 0 auto !important;
+    display: flex !important;
+    justify-content: center !important;
+}
+
+/* 🎯 CORREÇÃO: BOTÃO PERSONALIZADO CENTRALIZADO */
+iframe[src*="accounts.google.com"] {
+    margin: 0 auto !important;
 }
 
 .login-info {
@@ -499,6 +515,273 @@ main {
     transform: none;
 }
 
+/* ========== 🎯 MODAL CORRIGIDO ========== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1002;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+}
+
+.modal.show {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.modal-content {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.modal.show .modal-content {
+    transform: scale(1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--success);
+    margin: 0;
+}
+
+.success-icon {
+    color: var(--success);
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    cursor: pointer;
+    color: #64748b;
+    padding: 5px;
+    border-radius: 4px;
+    transition: var(--transition);
+}
+
+.btn-close:hover {
+    background: #f1f5f9;
+    color: var(--danger);
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.result-info {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+    border-left: 4px solid var(--accent);
+}
+
+.result-info p {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.5rem;
+}
+
+.result-info p:last-child {
+    margin-bottom: 0;
+}
+
+.result-info i {
+    color: var(--accent);
+    width: 16px;
+}
+
+.result-links {
+    margin: 1.5rem 0;
+}
+
+.link-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    transition: var(--transition);
+}
+
+.link-item:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.link-item.highlighted {
+    border-color: var(--success);
+    background: #f0fdf4;
+}
+
+.link-icon {
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    width: 40px;
+    text-align: center;
+}
+
+.doc-link .link-icon {
+    color: #2b579a;
+}
+
+.pdf-link .link-icon {
+    color: #f40f02;
+}
+
+.folder-link .link-icon {
+    color: var(--accent);
+}
+
+.link-info {
+    flex: 1;
+}
+
+.link-info strong {
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.link-info small {
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.link-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-link {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    transition: var(--transition);
+}
+
+.btn-link.compact {
+    padding: 6px 10px;
+}
+
+.btn-link.view {
+    background: var(--accent);
+}
+
+.btn-link.download {
+    background: var(--success);
+}
+
+.btn-link:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* 🎯 CORREÇÃO: MENSAGENS DO MODAL */
+.info-message, .success-message, .error-message-modal {
+    padding: 1rem;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.info-message {
+    background: #dbeafe;
+    border-left: 4px solid var(--accent);
+}
+
+.success-message {
+    background: #dcfce7;
+    border-left: 4px solid var(--success);
+    color: #166534;
+}
+
+.error-message-modal {
+    background: #fef2f2;
+    border-left: 4px solid var(--danger);
+    text-align: center;
+    flex-direction: column;
+}
+
+.error-icon {
+    font-size: 3rem;
+    color: var(--danger);
+    margin-bottom: 1rem;
+}
+
+.error-text h3 {
+    color: var(--danger);
+    margin-bottom: 0.5rem;
+}
+
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    justify-content: center;
+}
+
+.loading-documents {
+    text-align: center;
+    padding: 2rem;
+}
+
+.loading-spinner-small {
+    width: 30px;
+    height: 30px;
+    border: 3px solid #e2e8f0;
+    border-top: 3px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
 /* ========== RESPONSIVO ========== */
 @media (max-width: 768px) {
     .header-content {
@@ -541,6 +824,33 @@ main {
     .welcome-section h1 {
         font-size: 2rem;
     }
+    
+    .modal-content {
+        width: 95%;
+        margin: 1rem;
+    }
+    
+    .modal-header {
+        padding: 1rem 1.5rem;
+    }
+    
+    .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .link-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .link-icon {
+        margin-right: 0;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
 }
 
 @media (max-width: 480px) {
@@ -571,19 +881,16 @@ main {
     .welcome-section h1 {
         font-size: 2rem;
     }
+    
+    .google-login-section {
+        margin: 1rem 0;
+    }
 }
 
 /* ========== CORREÇÕES FINAIS ========== */
 /* Garantir que o loading some quando não estiver ativo */
 .loading-screen[style*="display: none"] {
     display: none !important;
-}
-
-/* 🎯 ESTILOS PARA LOGIN GOOGLE - RESPONSIVO */
-@media (max-width: 768px) {
-    .google-login-section {
-        margin: 1.5rem 0;
-    }
 }
 
 /* 🎯 GARANTIR QUE TUDO É VISÍVEL */
@@ -602,4 +909,11 @@ footer {
     text-align: center;
     padding: 1.5rem 0;
     margin-top: 3rem;
+}
+
+/* 🎯 CORREÇÃO: GARANTIR QUE MODAL NÃO APAREÇA SOZINHO */
+#resultModal:not(.show) {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
 }
