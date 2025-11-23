@@ -1458,3 +1458,4 @@ window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO 5.0 COM AUTENTICAÇÃO GOOGLE COMPLETA!');
 
+
