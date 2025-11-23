@@ -169,12 +169,22 @@ header {
     transform: rotate(90deg);
 }
 
-/* MENU DROPDOWN */
+/* ========== 🎯 MENU DROPDOWN CORRIGIDO ========== */
+
+/* MENU NO CANTO DIREITO */
+.nav-menu {
+    display: flex;
+    align-items: center;
+    margin-left: 15px;
+    position: relative; /* 🎯 IMPORTANTE: Container relativo */
+}
+
+/* 🎯 MENU DROPDOWN CORRIGIDO - ABAIXO DO BOTÃO */
 .nav-links {
     display: none;
-    position: fixed;
-    top: 70px;
-    right: 20px;
+    position: absolute; /* 🎯 Mudei de FIXED para ABSOLUTE */
+    top: 100%; /* 🎯 Fica logo abaixo do botão */
+    right: 0; /* 🎯 Alinhado à direita do botão */
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(20px);
     border-radius: 12px;
@@ -186,6 +196,10 @@ header {
     opacity: 0;
     transform: translateY(-10px);
     transition: all 0.3s ease;
+    
+    /* 🎯 GARANTIR que não herde posicionamento errado */
+    left: auto !important;
+    margin: 0 !important;
 }
 
 .nav-links.show {
@@ -219,6 +233,32 @@ header {
     text-align: center;
     color: var(--primary) !important;
     transition: var(--transition);
+}
+
+/* 🎯 MOBILE - CORREÇÃO PARA DISPOSITIVOS PEQUENOS */
+@media (max-width: 768px) {
+    .nav-links {
+        position: fixed; /* 🎯 Em mobile volta para fixed */
+        top: 65px;
+        right: 20px; /* 🎯 Pequena margem da direita */
+        left: auto !important;
+        min-width: 150px;
+        max-width: 200px;
+    }
+    
+    .nav-link {
+        padding: 14px 16px;
+        font-size: 0.95rem;
+    }
+}
+
+/* 🎯 CELULARES PEQUENOS */
+@media (max-width: 480px) {
+    .nav-links {
+        right: 15px; /* 🎯 Margem menor em celulares */
+        top: 60px;
+        min-width: 140px;
+    }
 }
 
 /* ========== MAIN CONTENT ========== */
@@ -1459,3 +1499,4 @@ footer {
         padding: 12px;
     }
 }
+
