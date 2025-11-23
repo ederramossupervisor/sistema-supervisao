@@ -13,11 +13,6 @@ function handleGoogleAuth(response) {
 let currentUser = null;
 let supervisorConfig = null;
 let currentDocumentType = null;
-// Estados globais
-let currentUser = null;
-let supervisorConfig = null;
-let currentDocumentType = null;
-
 // Dados completos das escolas para preenchimento automático
 const ESCOLAS_DATA_FRONTEND = {
     "CEEFMTI AFONSO CLÁUDIO": { municipio: "Afonso Cláudio", diretor: "Allan Dyoni Dehete Many" },
@@ -1488,5 +1483,6 @@ window.mostrarTela = mostrarTela;
 
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO 5.0 SEM FORMS!');
+
 
 
