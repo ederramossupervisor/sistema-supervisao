@@ -320,6 +320,12 @@ function iniciarSistema() {
             console.log('⚠️ Elemento loading não encontrado');
         }
     }, 1000);
+    // 🆕 INICIALIZAR FIREBASE
+    initializeAuth();
+    
+    // Configurar eventos
+    configurarEventos();
+}
     
     // 2. Mostrar tela de login
     mostrarTela('loginScreen');
@@ -333,6 +339,11 @@ function iniciarSistema() {
 
 function configurarEventos() {
     console.log('🔧 Configurando eventos...');
+    // 🆕 BOTÃO DE LOGIN DO FIREBASE
+    const googleLoginBtn = document.getElementById('googleLoginBtn');
+    if (googleLoginBtn) {
+        googleLoginBtn.addEventListener('click', handleGoogleLogin);
+    }
     
     // 🎯 MENU DE NAVEGAÇÃO
     const menuBtn = document.getElementById('menuButton');
@@ -544,40 +555,16 @@ function verificarLogin() {
     }
 }
 
-// 🎯 FUNÇÃO DE LOGOUT COMPLETA
-function fazerLogout() {
+// 🎯 ATUALIZAR FUNÇÃO DE LOGOUT (linha ~250)
+async function fazerLogout() {
     if (confirm('Tem certeza que deseja sair?')) {
-        // 🎯 LOGOUT DO GOOGLE
-        if (typeof google !== 'undefined' && google.accounts) {
-            google.accounts.id.disableAutoSelect();
-            if (currentUser?.email) {
-                google.accounts.id.revoke(currentUser.email, () => {
-                    console.log('🔐 Sessão Google revogada');
-                });
-            }
+        try {
+            await logout();
+        } catch (error) {
+            console.error('Erro no logout:', error);
         }
-        
-        // Limpar dados locais
-        currentUser = null;
-        supervisorConfig = null;
-        localStorage.removeItem('supervisionUser');
-        localStorage.removeItem('googleToken');
-        localStorage.removeItem('supervisorConfig');
-        
-        // Redirecionar para login
-        mostrarTela('loginScreen');
-        const navMenu = document.getElementById('navMenu');
-        if (navMenu) navMenu.style.display = 'none';
-        
-        // Recarregar a página para limpar completamente
-        setTimeout(() => {
-            window.location.reload();
-        }, 1000);
-        
-        console.log('👋 Usuário deslogado');
     }
 }
-
 // ================================
 // FUNÇÕES DE INTERFACE (MANTIDAS)
 // ================================
@@ -763,39 +750,32 @@ function atualizarContadorSelecionadas() {
     }
 }
 
-function handleSupervisorConfig(e) {
+// 🎯 ATUALIZAR CONFIGURAÇÃO DO SUPERVISOR (linha ~400)
+async function handleSupervisorConfig(e) {
     e.preventDefault();
-    console.log('💾 Salvando configuração...');
     
-    const supervisorName = document.getElementById('supervisorName');
-    if (!supervisorName) return;
-    
-    const name = supervisorName.value.trim();
-    
+    const supervisorName = document.getElementById('supervisorName').value.trim();
     const selectedOptions = document.querySelectorAll('.multiselect-option.selected');
     const selectedSchools = Array.from(selectedOptions).map(option => option.dataset.value);
     
-    if (!name) {
-        alert('❌ Por favor, informe seu nome como supervisor.');
+    if (!supervisorName || selectedSchools.length === 0) {
+        alert('Preencha todos os campos obrigatórios.');
         return;
     }
     
-    if (selectedSchools.length === 0) {
-        alert('❌ Por favor, selecione pelo menos uma escola sob sua responsabilidade.');
-        return;
-    }
-    
-    supervisorConfig = {
-        name: name,
+    const config = {
+        name: supervisorName,
         schools: selectedSchools
     };
     
-    localStorage.setItem('supervisorConfig', JSON.stringify(supervisorConfig));
-    
-    alert(`✅ Configuração salva com sucesso!\n${selectedSchools.length} escola(s) selecionada(s).`);
-    mostrarTela('mainScreen');
-    
-    console.log('💾 Configuração salva:', supervisorConfig);
+    try {
+        await saveSupervisorConfig(config);
+        supervisorConfig = config;
+        alert('✅ Configuração salva com sucesso!');
+        mostrarTela('mainScreen');
+    } catch (error) {
+        alert('❌ Erro ao salvar configuração: ' + error.message);
+    }
 }
 
 function selectAllSchools() {
@@ -1114,51 +1094,15 @@ function gerarNumeroOfício() {
     return `OF-${numero}`;
 }
 
-// ================================
-// 🎯 GERAÇÃO DE DOCUMENTOS (ATUALIZADA)
-// ================================
-
+// 🎯 ATUALIZAR GERAÇÃO DE DOCUMENTOS (linha ~600)
 async function gerarDocumentoCompleto(documentType, formData) {
-    console.log(`🎯 Gerando documento: ${documentType}`);
-    
-    const generateBtn = document.getElementById('generateButton');
-    const originalContent = generateBtn?.innerHTML;
-    
     try {
-        if (generateBtn) {
-            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
-            generateBtn.disabled = true;
-        }
-        
-        // 🎯 USAR NOVA FUNÇÃO callBackend
-        const result = await callBackend('createDocument', {
-            userEmail: currentUser.email,
-            userName: currentUser.name,
-            documentType: documentType,
-            schoolName: formData["Nome da Escola"],
-            formData: formData
-        });
-        
-        if (result && result.success) {
-            mostrarModalComLinks(result, formData["Nome da Escola"], documentType);
-        } else {
-            const errorMsg = result?.error || 'Erro desconhecido';
-            mostrarModalErro(errorMsg, formData["Nome da Escola"], documentType);
-        }
-        
+        const result = await generateDocument(documentType, formData);
+        mostrarModalComLinks(result, formData["Nome da Escola"], documentType);
     } catch (error) {
-        console.error('❌ Erro na geração:', error);
-        mostrarModalErro("Erro de conexão. Tente novamente.", formData["Nome da Escola"], documentType);
-        
-    } finally {
-        if (generateBtn && originalContent) {
-            generateBtn.innerHTML = originalContent;
-            generateBtn.disabled = false;
-        }
+        mostrarModalErro(error.message, formData["Nome da Escola"], documentType);
     }
-}
-
-// ================================
+}// ================================
 // FUNÇÕES DO MODAL (MANTIDAS)
 // ================================
 
@@ -1413,5 +1357,6 @@ setTimeout(() => {
         }
     });
 }, 2000);
+
 
 
