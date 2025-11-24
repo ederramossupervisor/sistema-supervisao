@@ -941,7 +941,6 @@ async function gerarDocumentoCompleto(documentType, formData) {
         mostrarModalErro(error.message, formData["Nome da Escola"], documentType);
     }
 }
-
 // ================================
 // FUNÇÕES DO MODAL
 // ================================
@@ -1185,3 +1184,4 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
+
