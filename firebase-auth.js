@@ -1,7 +1,5 @@
 // firebase-auth.js - SISTEMA DE LOGIN
 
-let currentUser = null;
-
 // 🎯 FUNÇÃO DE LOGIN COM GOOGLE
 async function loginWithGoogle() {
     try {
