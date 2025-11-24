@@ -955,9 +955,6 @@ function gerarNumeroOfício() {
     return `OF-${numero}`;
 }
 
-// 🔗 CONFIGURAÇÃO DO PROXY CODESANDBOX
-const PROXY_URL = 'https://csymhk-3000.csb.app/proxy';
-
 // 🎯 FUNÇÃO DE PROXY ATUALIZADA
 async function callAppsScriptViaProxy(data) {
   try {
@@ -1289,5 +1286,6 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
+
 
 
