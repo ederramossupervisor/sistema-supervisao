@@ -1,0 +1,39 @@
+name: Apps Script Proxy
+
+on:
+  repository_dispatch:
+    types: [apps-script-request]
+
+jobs:
+  proxy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Google Apps Script
+        run: |
+          echo "📨 Recebendo requisição do frontend..."
+          echo "Dados recebidos: ${{ toJson(github.event.client_payload) }}"
+          
+          # Fazer chamada para o Apps Script
+          response=$(curl -s -w "HTTP_STATUS:%{http_code}" -X POST \
+            "https://script.google.com/macros/s/AKfycbzfvBnXJK3LDP7QYHdlZptVgJWfMeYa7RJtAbdCKC9_U3VQnt8yRQztf48lhP-8ZIMT/exec" \
+            -H "Content-Type: application/json" \
+            -d '${{ toJson(github.event.client_payload) }}')
+          
+          # Separar corpo do status HTTP
+          BODY=$(echo "$response" | sed -e 's/HTTP_STATUS\:.*//g')
+          HTTP_STATUS=$(echo "$response" | tr -d '\n' | sed -e 's/.*HTTP_STATUS://')
+          
+          echo "Status HTTP: $HTTP_STATUS"
+          echo "Resposta do Apps Script: $BODY"
+          
+          # Salvar resposta para debug
+          echo "$BODY" > response.json
+          
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Response for Debug
+        uses: actions/upload-artifact@v3
+        with:
+          name: apps-script-response
+          path: response.json
