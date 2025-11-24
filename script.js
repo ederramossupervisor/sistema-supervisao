@@ -6,6 +6,50 @@ let currentUser = null;
 let supervisorConfig = null;
 let currentDocumentType = null;
 
+// 🎯 CONFIGURAÇÃO DO PROXY CODESANDBOX (DEVE ESTAR NO script.js)
+const PROXY_URL = 'https://csymhk-3000.csb.app/proxy';
+
+// 🎯 FUNÇÃO DE PROXY ATUALIZADA
+async function callAppsScriptViaProxy(data) {
+  try {
+    console.log('🔄 Enviando dados para CodeSandbox...', data);
+    
+    const response = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    });
+
+    console.log('📨 Status da resposta:', response.status);
+    
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('✅ Resposta recebida via CodeSandbox:', result);
+    
+    return result;
+
+  } catch (error) {
+    console.error('❌ Erro na comunicação com CodeSandbox:', error);
+    throw new Error(`Falha na comunicação: ${error.message}`);
+  }
+}
+
+// 🎯 FUNÇÃO PARA ATUALIZAR INTERFACE DO USUÁRIO
+function atualizarInterfaceUsuario() {
+    const userName = document.getElementById('userName');
+    const welcomeName = document.getElementById('welcomeName');
+    
+    if (currentUser && userName) userName.textContent = currentUser.name;
+    if (currentUser && welcomeName) welcomeName.textContent = currentUser.name;
+    
+    console.log('👤 Interface atualizada para:', currentUser?.name);
+}
+
 // Dados completos das escolas para preenchimento automático
 const ESCOLAS_DATA_FRONTEND = {
     "CEEFMTI AFONSO CLÁUDIO": { municipio: "Afonso Cláudio", diretor: "Allan Dyoni Dehete Many" },
@@ -1245,4 +1289,5 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
+
 
