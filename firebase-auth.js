@@ -1,27 +1,15 @@
-// firebase-auth.js - SISTEMA DE LOGIN CORRIGIDO (SEM currentUser)
+// firebase-auth.js - VERSÃO SIMPLIFICADA E SEGURA
 
 // 🎯 FUNÇÃO DE LOGIN COM GOOGLE
 async function loginWithGoogle() {
     try {
         console.log('🔐 Iniciando login...');
-        
-        // Abrir popup do Google
         const result = await firebaseAuth.signInWithPopup(googleProvider);
-        const user = result.user;
-        
-        console.log('✅ Login bem-sucedido:', user.email);
-        return user;
-        
+        console.log('✅ Login bem-sucedido:', result.user.email);
+        return result.user;
     } catch (error) {
         console.error('❌ Erro no login:', error);
-        
-        if (error.code === 'auth/popup-closed-by-user') {
-            throw new Error('Login cancelado pelo usuário');
-        } else if (error.code === 'auth/unauthorized-domain') {
-            throw new Error('Domínio não autorizado. Configure o domínio no Firebase Console.');
-        } else {
-            throw new Error('Erro no login: ' + error.message);
-        }
+        throw new Error('Erro no login: ' + error.message);
     }
 }
 
@@ -36,12 +24,13 @@ async function logout() {
     }
 }
 
-// 🎯 OBSERVAR MUDANÇAS NO LOGIN
+// 🎯 OBSERVADOR DE AUTENTICAÇÃO
 function setupAuthListener() {
     firebaseAuth.onAuthStateChanged((user) => {
+        console.log('🔄 Estado de autenticação mudou:', user ? user.email : 'null');
+        
         if (user) {
-            // 🎯 USUÁRIO LOGOU
-            // currentUser é GLOBAL (definido no script.js)
+            // 🎯 USUÁRIO LOGOU - atualizar variável global
             window.currentUser = {
                 uid: user.uid,
                 name: user.displayName,
@@ -49,14 +38,14 @@ function setupAuthListener() {
                 photoURL: user.photoURL
             };
             
-            console.log('👤 Usuário logado:', window.currentUser.email);
+            console.log('👤 Usuário logado (auth):', window.currentUser.email);
             
-            // Salvar no localStorage como backup
+            // Salvar no localStorage
             localStorage.setItem('supervisionUser', JSON.stringify(window.currentUser));
             
-            // Atualizar interface
-            updateUserInterface();
+            // Chamar funções do script principal se existirem
             if (typeof mostrarMenu === 'function') mostrarMenu();
+            if (typeof atualizarInterfaceUsuario === 'function') atualizarInterfaceUsuario();
             if (typeof mostrarTela === 'function') mostrarTela('mainScreen');
             if (typeof carregarDocumentos === 'function') carregarDocumentos();
             
@@ -64,48 +53,27 @@ function setupAuthListener() {
             // 🎯 USUÁRIO DESLOGOU
             window.currentUser = null;
             localStorage.removeItem('supervisionUser');
+            
             if (typeof mostrarTela === 'function') mostrarTela('loginScreen');
             
-            // Esconder menu
             const navMenu = document.getElementById('navMenu');
             if (navMenu) navMenu.style.display = 'none';
             
-            console.log('🔐 Usuário deslogado');
+            console.log('🔐 Usuário deslogado (auth)');
         }
     });
-}
-
-// 🎯 ATUALIZAR A TELA COM DADOS DO USUÁRIO
-function updateUserInterface() {
-    const userName = document.getElementById('userName');
-    const welcomeName = document.getElementById('welcomeName');
-    const userAvatar = document.querySelector('.user-avatar');
-    
-    if (window.currentUser && userName) {
-        userName.textContent = window.currentUser.name;
-    }
-    if (window.currentUser && welcomeName) {
-        welcomeName.textContent = window.currentUser.name;
-    }
-    if (window.currentUser && userAvatar) {
-        if (window.currentUser.photoURL) {
-            userAvatar.innerHTML = `<img src="${window.currentUser.photoURL}" alt="${window.currentUser.name}" style="width:100%;height:100%;border-radius:50%;">`;
-        } else {
-            userAvatar.innerHTML = '<i class="fas fa-user"></i>';
-        }
-    }
 }
 
 // 🎯 INICIAR SISTEMA DE AUTENTICAÇÃO
 function initializeAuth() {
     console.log('🔥 Inicializando autenticação Firebase...');
     
-    // Verificar se já está logado no localStorage
+    // Verificar se já está logado
     const savedUser = localStorage.getItem('supervisionUser');
     if (savedUser) {
         try {
             window.currentUser = JSON.parse(savedUser);
-            console.log('✅ Usuário recuperado do localStorage:', window.currentUser?.email);
+            console.log('✅ Usuário recuperado do localStorage (auth):', window.currentUser?.email);
         } catch (e) {
             console.error('❌ Erro ao recuperar usuário:', e);
         }
@@ -115,7 +83,7 @@ function initializeAuth() {
     console.log('✅ Sistema de autenticação pronto');
 }
 
-// Exportar funções para usar no script principal
+// Exportar funções
 window.loginWithGoogle = loginWithGoogle;
 window.logout = logout;
 window.initializeAuth = initializeAuth;
