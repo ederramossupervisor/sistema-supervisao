@@ -13,58 +13,120 @@ const GITHUB_REPO = 'sistema-supervisao';
 // 🎯 FUNÇÃO DE PROXY VIA GITHUB ACTIONS
 async function callAppsScriptViaProxy(data) {
   try {
-    console.log('🚀 Tentando comunicação direta com CORS...', data.documentType);
+    console.log('🚀 Iniciando sistema de polling...', data.documentType);
     
-    // 🎯 AGORA VAMOS TENTAR CORS PRIMEIRO
+    // 🎯 AGORA VAMOS USAR POLLING
     const response = await callAppsScriptDirect(data);
     
     return response;
 
   } catch (error) {
-    console.error('❌ Erro na comunicação CORS:', error);
+    console.error('❌ Erro no sistema de polling:', error);
     
-    // Fallback: tentar chamada GitHub Actions (se implementada futuramente)
-    console.log('🔄 Comunicação direta falhou, usando fallback...');
+    // 🎯 FALLBACK: Tentar método antigo se polling falhar
+    console.log('🔄 Tentando fallback...');
     throw error;
   }
 }
-
-// 🎯 FUNÇÃO ATUALIZADA - CHAMADA DIRETA COM CORS
+// 🎯 FUNÇÃO COM POLLING PARA LINKS REAIS
 async function callAppsScriptDirect(data) {
   try {
-    console.log('🔗 Tentando chamada direta COM CORS...');
+    console.log('🔗 Iniciando processo com polling...');
     
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby2PWkhQIulGO_cPyCH3kE407pW8k6FLI_QdK_Tfr36a4TmYh-Zzzy4mkuPTpPfBrjL/exec';
     
-    const response = await fetch(APPS_SCRIPT_URL, {
+    // 🎯 1. INICIAR PROCESSAMENTO ASSÍNCRONO (no-cors - não espera resposta)
+    console.log('📤 Enviando dados para processamento assíncrono...');
+    await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      // 🎯 REMOVIDO mode: 'no-cors' para poder ler a resposta real!
-      body: JSON.stringify(data)
+      mode: 'no-cors', // ✅ ACEITA NÃO LER RESPOSTA
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...data,
+        action: 'createDocumentAsync'  // 🎯 AÇÃO NOVA
+      })
     });
 
-    console.log('📨 Status da resposta:', response.status);
+    console.log('✅ Dados enviados para processamento em background');
     
-    if (!response.ok) {
-      throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    console.log('✅ Resposta REAL recebida do Apps Script:', result);
+    // 🎯 2. GERAR UM ID TEMPORÁRIO PARA POLLING
+    // Como não podemos ler a resposta no-cors, vamos criar um ID local
+    const localDocumentId = 'doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    console.log('🆕 ID local para polling:', localDocumentId);
     
-    return result;
+    // 🎯 3. FAZER POLLING ATÉ DOCUMENTO FICAR PRONTO
+    console.log('🔄 Iniciando polling...');
+    const pollResult = await pollDocumentStatus(localDocumentId, data);
+    
+    console.log('✅ Polling finalizado com links REAIS:', pollResult);
+    return pollResult;
 
   } catch (error) {
-    console.error('❌ Erro na chamada direta:', error);
+    console.error('❌ Erro no processo com polling:', error);
     
-    // 🎯 FALLBACK: Se CORS ainda não funcionar, tentar modo no-cors
-    console.log('🔄 Tentando fallback com modo no-cors...');
+    // 🎯 FALLBACK: Se polling falhar, usar método antigo
+    console.log('🔄 Usando fallback no-cors...');
     return await callAppsScriptNoCors(data);
   }
 }
+// 🎯 FUNÇÃO DE POLLING PARA VERIFICAR STATUS
+async function pollDocumentStatus(localDocumentId, originalData) {
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxt1upsPBcs8qJXCjR7VGgoCdFVyNV1ucVob2WV33QoWOuRn0r-40p_hqfCYG87h8-U/exec';
+  
+  const maxAttempts = 25; // 25 tentativas
+  const pollInterval = 3000; // 3 segundos entre tentativas
+  
+  console.log(`📊 Iniciando polling (${maxAttempts} tentativas, ${pollInterval}ms intervalo)`);
 
+  // 🎯 ATUALIZAR MENSAGEM DE LOADING
+  const loadingMessage = document.getElementById('loadingMessage');
+  
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    if (loadingMessage) {
+      loadingMessage.textContent = `Processando documento... (${attempt}/${maxAttempts})`;
+    }
+    
+    console.log(`📊 Polling tentativa ${attempt}/${maxAttempts} para ID: ${localDocumentId}`);
+    
+    try {
+      // 🎯 VERIFICAR STATUS VIA GET (NÃO BLOQUEIA CORS!)
+      const statusResponse = await fetch(`${APPS_SCRIPT_URL}?action=checkStatus&documentId=${localDocumentId}`);
+      
+      if (statusResponse.ok) {
+        const statusResult = await statusResponse.json();
+        console.log('📨 Resposta do polling:', statusResult);
+        
+        if (statusResult.status === 'completed' && statusResult.result) {
+          console.log('🎉 Documento pronto! Links REAIS:', statusResult.result.links);
+          return statusResult.result; // 🎯 RETORNAR LINKS REAIS!
+        }
+        else if (statusResult.status === 'error') {
+          throw new Error(statusResult.error || 'Erro no processamento do documento');
+        }
+        else if (statusResult.status === 'processing') {
+          console.log('🔄 Ainda processando...', statusResult.message);
+        }
+        else if (statusResult.status === 'not_found') {
+          console.log('📭 Documento não encontrado, continuando polling...');
+          // 🎯 DOCUMENTO NÃO ENCONTRADO É NORMAL NAS PRIMEIRAS TENTATIVAS
+        }
+      } else {
+        console.log(`⚠️ Status HTTP ${statusResponse.status}, continuando polling...`);
+      }
+    } catch (error) {
+      console.log(`⚠️ Erro na tentativa ${attempt}:`, error.message);
+    }
+    
+    // 🎯 AGUARDAR ANTES DA PRÓXIMA TENTATIVA
+    if (attempt < maxAttempts) {
+      console.log(`⏳ Aguardando ${pollInterval}ms para próxima tentativa...`);
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    }
+  }
+  
+  // 🎯 SE CHEGOU AQUI, TEMPO ESGOTADO
+  throw new Error(`Tempo esgotado (${maxAttempts * pollInterval / 1000} segundos). O documento pode estar sendo processado - verifique seu Google Drive em alguns minutos.`);
+}
 // 🎯 FUNÇÃO FALLBACK - MODO NO-CORS (SE CORS AINDA FALHAR)
 async function callAppsScriptNoCors(data) {
   try {
@@ -1052,7 +1114,7 @@ async function gerarDocumentoCompleto(documentType, formData) {
 
         // Atualizar mensagem de loading
         if (loadingMessage) {
-            loadingMessage.textContent = 'Gerando documentos no Google Drive...';
+            loadingMessage.textContent = 'Iniciando processamento...';
         }
 
         // Chamar via GitHub Actions proxy
@@ -1323,6 +1385,7 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
+
 
 
 
