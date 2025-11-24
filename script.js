@@ -986,35 +986,6 @@ function gerarNumeroOfício() {
     return `OF-${numero}`;
 }
 
-// 🎯 FUNÇÃO DE PROXY ATUALIZADA
-async function callAppsScriptViaProxy(data) {
-  try {
-    console.log('🔄 Enviando dados para CodeSandbox...', data);
-    
-    const response = await fetch(PROXY_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data)
-    });
-
-    console.log('📨 Status da resposta:', response.status);
-    
-    if (!response.ok) {
-      throw new Error(`Erro HTTP: ${response.status}`);
-    }
-
-    const result = await response.json();
-    console.log('✅ Resposta recebida via CodeSandbox:', result);
-    
-    return result;
-
-  } catch (error) {
-    console.error('❌ Erro na comunicação com CodeSandbox:', error);
-    throw new Error(`Falha na comunicação: ${error.message}`);
-  }
-}
 
 // Geração de documentos ATUALIZADA
 async function gerarDocumentoCompleto(documentType, formData) {
@@ -1316,6 +1287,7 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
+
 
 
 
