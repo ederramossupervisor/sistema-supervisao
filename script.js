@@ -413,15 +413,13 @@ function initializeGoogleSignIn() {
     }
 }
 
-// 🎯 FUNÇÃO PRINCIPAL DE AUTENTICAÇÃO (ATUALIZADA)
-function handleGoogleSignIn(response) {
-    console.log('🔐 Resposta do Google Sign-In:', response);
-    
-    if (response.credential) {
-        validateWithBackend(response.credential);
-    } else {
-        console.error('❌ Credencial não recebida');
-        alert('Erro na autenticação. Tente novamente.');
+// 🎯 NOVA FUNÇÃO DE LOGIN (linha ~200)
+async function handleGoogleLogin() {
+    try {
+        await loginWithGoogle();
+        // O resto é automático pelo Firebase
+    } catch (error) {
+        alert('Erro no login: ' + error.message);
     }
 }
 
@@ -1415,4 +1413,5 @@ setTimeout(() => {
         }
     });
 }, 2000);
+
 
