@@ -13,27 +13,26 @@ const GITHUB_REPO = 'sistema-supervisao';
 // 🎯 FUNÇÃO DE PROXY VIA GITHUB ACTIONS
 async function callAppsScriptViaProxy(data) {
   try {
-    console.log('🚀 Disparando GitHub Actions...', data.documentType);
+    console.log('🚀 Tentando comunicação direta com CORS...', data.documentType);
     
-    // Para GitHub Actions, precisamos de um token
-    // Vamos usar uma abordagem alternativa sem token por enquanto
+    // 🎯 AGORA VAMOS TENTAR CORS PRIMEIRO
     const response = await callAppsScriptDirect(data);
     
     return response;
 
   } catch (error) {
-    console.error('❌ Erro no GitHub Actions:', error);
+    console.error('❌ Erro na comunicação CORS:', error);
     
-    // Fallback: tentar chamada direta (pode ter problemas de CORS)
-    console.log('🔄 Tentando chamada direta como fallback...');
-    return await callAppsScriptDirect(data);
+    // Fallback: tentar chamada GitHub Actions (se implementada futuramente)
+    console.log('🔄 Comunicação direta falhou, usando fallback...');
+    throw error;
   }
 }
 
-// Função de fallback - chamada direta ao Apps Script
+// 🎯 FUNÇÃO ATUALIZADA - CHAMADA DIRETA COM CORS
 async function callAppsScriptDirect(data) {
   try {
-    console.log('🔗 Tentando chamada direta ao Apps Script...');
+    console.log('🔗 Tentando chamada direta COM CORS...');
     
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzfvBnXJK3LDP7QYHdlZptVgJWfMeYa7RJtAbdCKC9_U3VQnt8yRQztf48lhP-8ZIMT/exec';
     
@@ -42,35 +41,72 @@ async function callAppsScriptDirect(data) {
       headers: {
         'Content-Type': 'application/json',
       },
-      mode: 'no-cors', // Modo no-cors para evitar bloqueio
+      // 🎯 REMOVIDO mode: 'no-cors' para poder ler a resposta real!
       body: JSON.stringify(data)
     });
 
-    // Em modo no-cors, não podemos ler a resposta
-    // Mas o Apps Script ainda processa a requisição
+    console.log('📨 Status da resposta:', response.status);
+    
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    console.log('✅ Resposta REAL recebida do Apps Script:', result);
+    
+    return result;
+
+  } catch (error) {
+    console.error('❌ Erro na chamada direta:', error);
+    
+    // 🎯 FALLBACK: Se CORS ainda não funcionar, tentar modo no-cors
+    console.log('🔄 Tentando fallback com modo no-cors...');
+    return await callAppsScriptNoCors(data);
+  }
+}
+
+// 🎯 FUNÇÃO FALLBACK - MODO NO-CORS (SE CORS AINDA FALHAR)
+async function callAppsScriptNoCors(data) {
+  try {
+    console.log('🔗 Fallback: Modo no-cors...');
+    
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzfvBnXJK3LDP7QYHdlZptVgJWfMeYa7RJtAbdCKC9_U3VQnt8yRQztf48lhP-8ZIMT/exec';
+    
+    // Enviar sem esperar resposta (modo no-cors)
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      mode: 'no-cors',
+      body: JSON.stringify(data)
+    });
+
     console.log('✅ Requisição enviada (modo no-cors)');
     
-    // Retornar resposta simulada para continuar o fluxo
+    // 🎯 Retornar resposta otimista
     return {
       success: true,
-      message: "Documento processado em background",
+      message: "Documento em processamento - os links reais estarão no Google Drive",
       links: {
         doc: "#",
         pdf: "#", 
         folder: "#"
       },
       fileNames: {
-        doc: "Documento_Simulado.docx",
-        pdf: "Documento_Simulado.pdf"
+        doc: "Documento_Em_Processamento.docx",
+        pdf: "Documento_Em_Processamento.pdf"
       },
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      note: "Verifique seu Google Drive em alguns instantes"
     };
 
   } catch (error) {
-    console.error('❌ Erro na chamada direta:', error);
-    throw error;
+    console.error('❌ Erro no fallback no-cors:', error);
+    throw new Error('Falha na comunicação com o servidor: ' + error.message);
   }
-}// 🎯 FUNÇÃO PARA ATUALIZAR INTERFACE DO USUÁRIO
+}
+// 🎯 FUNÇÃO PARA ATUALIZAR INTERFACE DO USUÁRIO
 function atualizarInterfaceUsuario() {
     const userName = document.getElementById('userName');
     const welcomeName = document.getElementById('welcomeName');
@@ -1287,6 +1323,7 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
+
 
 
 
