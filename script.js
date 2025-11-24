@@ -1048,9 +1048,8 @@ async function gerarDocumentoCompleto(documentType, formData) {
             loadingMessage.textContent = 'Gerando documentos no Google Drive...';
         }
 
-        // Chamar via proxy CodeSandbox
-        const result = await callAppsScriptViaProxy(requestData);
-
+        // Chamar via GitHub Actions proxy
+const result = await callAppsScriptViaProxy(requestData);
         // Esconder loading
         if (loadingModal) {
             loadingModal.style.display = 'none';
@@ -1317,6 +1316,7 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
+
 
 
 
