@@ -1,26 +1,37 @@
 // firebase-documents.js - SISTEMA DE DOCUMENTOS
 
-// 🎯 SALVAR CONFIGURAÇÃO DO SUPERVISOR
+// 🎯 SALVAR CONFIGURAÇÃO DO SUPERVISOR (VERSÃO CORRIGIDA)
 async function saveSupervisorConfig(config) {
-    if (!currentUser) {
+    if (!currentUser || !currentUser.uid) {
         throw new Error('Usuário não está logado');
     }
     
     try {
-        await firebaseDb.collection('userConfigs').doc(currentUser.uid).set({
-            ...config,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        console.log('💾 Tentando salvar configuração para usuário:', currentUser.uid);
         
-        console.log('✅ Configuração salva no Firebase');
+        const userConfig = {
+            name: config.name,
+            schools: config.schools,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            userEmail: currentUser.email,
+            userId: currentUser.uid // 🔥 ADICIONE ESTA LINHA
+        };
+        
+        await firebaseDb.collection('userConfigs').doc(currentUser.uid).set(userConfig);
+        
+        console.log('✅ Configuração salva no Firebase com sucesso!');
         return { success: true };
         
     } catch (error) {
-        console.error('❌ Erro ao salvar configuração:', error);
-        throw error;
+        console.error('❌ Erro detalhado ao salvar configuração:', error);
+        
+        // Fallback para localStorage
+        console.log('🔄 Tentando salvar no localStorage...');
+        localStorage.setItem('supervisorConfig', JSON.stringify(config));
+        
+        throw new Error('Erro ao salvar no Firebase. Dados salvos localmente.');
     }
 }
-
 // 🎯 GERAR DOCUMENTO (SIMULAÇÃO - SEM CORS!)
 async function generateDocument(documentType, formData) {
     if (!currentUser) {
