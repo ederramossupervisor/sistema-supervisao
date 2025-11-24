@@ -1,8 +1,5 @@
 // firebase-auth.js - SISTEMA DE LOGIN CORRIGIDO
 
-// Estados globais
-let currentUser = null;
-
 // 🎯 FUNÇÃO DE LOGIN COM GOOGLE
 async function loginWithGoogle() {
     try {
