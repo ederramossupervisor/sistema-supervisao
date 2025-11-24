@@ -911,37 +911,98 @@ function gerarNumeroOfício() {
     return `OF-${numero}`;
 }
 
-// Geração de documentos
+// 🔗 CONFIGURAÇÃO DO PROXY CODESANDBOX
+const PROXY_URL = 'https://csymhk-3000.csb.app/proxy';
+
+// 🎯 FUNÇÃO DE PROXY ATUALIZADA
+async function callAppsScriptViaProxy(data) {
+  try {
+    console.log('🔄 Enviando dados para CodeSandbox...', data);
+    
+    const response = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data)
+    });
+
+    console.log('📨 Status da resposta:', response.status);
+    
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('✅ Resposta recebida via CodeSandbox:', result);
+    
+    return result;
+
+  } catch (error) {
+    console.error('❌ Erro na comunicação com CodeSandbox:', error);
+    throw new Error(`Falha na comunicação: ${error.message}`);
+  }
+}
+
+// Geração de documentos ATUALIZADA
 async function gerarDocumentoCompleto(documentType, formData) {
     try {
-        let result;
+        console.log('📝 Iniciando geração de documento via proxy...');
         
-        if (typeof generateDocument !== 'undefined') {
-            result = await generateDocument(documentType, formData);
+        // Mostrar loading
+        const loadingModal = document.getElementById('loadingModal');
+        const loadingMessage = document.getElementById('loadingMessage');
+        if (loadingModal) {
+            loadingModal.style.display = 'block';
+            loadingMessage.textContent = 'Conectando com o servidor...';
+        }
+
+        // Preparar dados para envio
+        const requestData = {
+            action: "createDocument",
+            userEmail: currentUser?.email || "demo@educador.edu.es.gov.br",
+            documentType: documentType,
+            formData: formData,
+            userInfo: {
+                name: currentUser?.name || "Supervisor Demo",
+                schools: supervisorConfig?.schools || []
+            }
+        };
+
+        console.log('📤 Enviando para proxy:', requestData);
+
+        // Atualizar mensagem de loading
+        if (loadingMessage) {
+            loadingMessage.textContent = 'Gerando documentos no Google Drive...';
+        }
+
+        // Chamar via proxy CodeSandbox
+        const result = await callAppsScriptViaProxy(requestData);
+
+        // Esconder loading
+        if (loadingModal) {
+            loadingModal.style.display = 'none';
+        }
+
+        if (result.success) {
+            console.log('🎉 Documentos gerados com sucesso!', result);
+            mostrarModalComLinks(result, formData["Nome da Escola"], documentType);
         } else {
-            // Fallback - simular geração
-            result = {
-                success: true,
-                documentId: `${documentType}_${Date.now()}`,
-                links: {
-                    doc: "#",
-                    pdf: "#",
-                    folder: "#"
-                },
-                fileNames: {
-                    doc: `${documentType}_${formData["Nome da Escola"]}.docx`,
-                    pdf: `${documentType}_${formData["Nome da Escola"]}.pdf`
-                }
-            };
-            alert('⚠️ Modo demonstração - Firebase não está configurado');
+            throw new Error(result.error || 'Erro desconhecido ao gerar documentos');
+        }
+
+    } catch (error) {
+        console.error('💥 Erro crítico:', error);
+        
+        // Esconder loading em caso de erro
+        const loadingModal = document.getElementById('loadingModal');
+        if (loadingModal) {
+            loadingModal.style.display = 'none';
         }
         
-        mostrarModalComLinks(result, formData["Nome da Escola"], documentType);
-    } catch (error) {
         mostrarModalErro(error.message, formData["Nome da Escola"], documentType);
     }
-}
-// ================================
+}// ================================
 // FUNÇÕES DO MODAL
 // ================================
 
