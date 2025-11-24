@@ -6,8 +6,8 @@ let currentUser = null;
 let supervisorConfig = null;
 let currentDocumentType = null;
 
-// 🎯 CONFIGURAÇÃO DO PROXY CODESANDBOX (DEVE ESTAR NO script.js)
-const PROXY_URL = 'https://csymhk-3000.csb.app/proxy';
+// 🎯 CONFIGURAÇÃO DO PROXY netlify
+const PROXY_URL = '/.netlify/functions/proxy';
 
 // 🎯 FUNÇÃO DE PROXY ATUALIZADA
 async function callAppsScriptViaProxy(data) {
@@ -1286,6 +1286,7 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
+
 
 
 
