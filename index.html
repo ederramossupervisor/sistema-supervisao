@@ -247,7 +247,25 @@
             <p>&copy; Sistema Supervisão - Desenvolvido por Eder Ramos</p>
         </div>
     </footer>
-
+    
+<!-- Modal de Loading -->
+<div id="loadingModal" class="modal" style="display: none;">
+    <div class="modal-content" style="text-align: center; max-width: 400px;">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--primary);"></i>
+        </div>
+        <h3 style="margin: 20px 0 10px;">Gerando Documentos</h3>
+        <p id="loadingMessage" style="color: var(--text-light);">
+            Conectando com o servidor...
+        </p>
+        <div style="margin-top: 20px; padding: 15px; background: var(--background-light); border-radius: 8px;">
+            <small style="color: var(--text-light);">
+                <i class="fas fa-info-circle"></i>
+                Isso pode levar alguns segundos...
+            </small>
+        </div>
+    </div>
+</div>
     <!-- Scripts - ORDEM CORRETA É CRÍTICA! -->
     
     <!-- 1. Firebase SDK -->
@@ -264,3 +282,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
