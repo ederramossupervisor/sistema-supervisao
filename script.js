@@ -1,9 +1,5 @@
-// 🎯 SISTEMA SUPERVISÃO - VERSÃO 6.0 - SEM PROBLEMAS DE CORS
-console.log('🎯 INICIANDO SISTEMA SUPERVISÃO - VERSÃO 6.0 SEM CORS');
-
-// URL do seu Google Apps Script (JÁ ATUALIZADA)
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfvBnXJK3LDP7QYHdlZptVgJWfMeYa7RJtAbdCKC9_U3VQnt8yRQztf48lhP-8ZIMT/exec";
-const CLIENT_ID = "725842703932-oe3v18cjvunvdarcdi7825rdgflqqqvj.apps.googleusercontent.com";
+// 🎯 SISTEMA SUPERVISÃO - VERSÃO FIREBASE
+console.log('🎯 INICIANDO SISTEMA SUPERVISÃO - VERSÃO FIREBASE');
 
 // Estados globais
 let currentUser = null;
@@ -236,68 +232,6 @@ const APP_DATA = {
 };
 
 // ================================
-// 🎯 NOVA FUNÇÃO PARA CHAMAR BACKEND (SEM CORS!)
-// ================================
-
-async function callBackend(action, data = {}) {
-    console.log('📤 Chamando backend:', action);
-    
-    return new Promise((resolve, reject) => {
-        // 🎯 TENTAR FETCH PRIMEIRO (pode funcionar em alguns navegadores)
-        fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({action: action, ...data})
-        })
-        .then(response => response.json())
-        .then(result => {
-            console.log('✅ Resposta do backend:', result);
-            resolve(result);
-        })
-        .catch(fetchError => {
-            console.log('⚠️ Fetch falhou, tentando método alternativo...');
-            
-            // 🎯 MÉTODO ALTERNATIVO - FORM SUBMIT
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = APPS_SCRIPT_URL;
-            form.style.display = 'none';
-            
-            const input = document.createElement('input');
-            input.name = 'payload';
-            input.value = JSON.stringify({action: action, ...data});
-            form.appendChild(input);
-            
-            document.body.appendChild(form);
-            
-            // 🎯 CRIAR IFRAME PARA RECEBER RESPOSTA
-            const iframe = document.createElement('iframe');
-            iframe.name = 'responseFrame';
-            iframe.style.display = 'none';
-            
-            iframe.onload = function() {
-                try {
-                    const responseText = iframe.contentDocument.body.innerText;
-                    const result = JSON.parse(responseText || '{}');
-                    console.log('✅ Resposta alternativa:', result);
-                    resolve(result);
-                } catch (e) {
-                    resolve({success: false, error: 'Erro ao processar resposta'});
-                }
-                
-                // Limpar
-                document.body.removeChild(form);
-                document.body.removeChild(iframe);
-            };
-            
-            document.body.appendChild(iframe);
-            form.target = 'responseFrame';
-            form.submit();
-        });
-    });
-}
-
-// ================================
 // FUNÇÕES PRINCIPAIS - INICIALIZAÇÃO
 // ================================
 
@@ -320,32 +254,32 @@ function iniciarSistema() {
             console.log('⚠️ Elemento loading não encontrado');
         }
     }, 1000);
-    // 🆕 INICIALIZAR FIREBASE
-    initializeAuth();
     
-    // Configurar eventos
-    configurarEventos();
-}
+    // 2. Inicializar Firebase
+    if (typeof initializeAuth !== 'undefined') {
+        initializeAuth();
+    } else {
+        console.log('⚠️ Firebase não carregado - usando modo fallback');
+        mostrarTela('loginScreen');
+    }
     
-    // 2. Mostrar tela de login
-    mostrarTela('loginScreen');
-
     // 3. Configurar eventos
     configurarEventos();
     
-    // 4. Verificar se já está logado
-    verificarLogin();
+    // 4. Verificar se já está logado (fallback)
+    verificarLoginFallback();
 }
 
 function configurarEventos() {
     console.log('🔧 Configurando eventos...');
-    // 🆕 BOTÃO DE LOGIN DO FIREBASE
+    
+    // Botão de login do Firebase
     const googleLoginBtn = document.getElementById('googleLoginBtn');
     if (googleLoginBtn) {
         googleLoginBtn.addEventListener('click', handleGoogleLogin);
     }
     
-    // 🎯 MENU DE NAVEGAÇÃO
+    // Menu de navegação
     const menuBtn = document.getElementById('menuButton');
     const configBtn = document.getElementById('configButton');
     const logoutBtn = document.getElementById('logoutButton');
@@ -354,13 +288,13 @@ function configurarEventos() {
     if (configBtn) configBtn.addEventListener('click', () => mostrarTela('configScreen'));
     if (logoutBtn) logoutBtn.addEventListener('click', fazerLogout);
     
-    // 🎯 FORMULÁRIO DE CONFIGURAÇÃO
+    // Formulário de configuração
     const supervisorForm = document.getElementById('supervisorForm');
     if (supervisorForm) {
         supervisorForm.addEventListener('submit', handleSupervisorConfig);
     }
     
-    // 🎯 FECHAR MENU AO CLICAR FORA
+    // Fechar menu ao clicar fora
     document.addEventListener('click', (e) => {
         const navLinks = document.querySelector('.nav-links');
         if (navLinks && !e.target.closest('.nav-menu')) {
@@ -368,183 +302,70 @@ function configurarEventos() {
         }
     });
     
-    // 🎯 CONFIGURAR EVENTOS DO MODAL
+    // Configurar eventos do modal
     configurarEventosModal();
-    
-    // 🎯 INICIALIZAR GOOGLE SIGN-IN
-    if (typeof google !== 'undefined' && google.accounts) {
-        initializeGoogleSignIn();
-    } else {
-        // Carregar script do Google se não estiver disponível
-        loadGoogleSignInScript();
-    }
 }
 
 // ================================
-// 🎯 AUTENTICAÇÃO GOOGLE - ATUALIZADA
+// 🎯 AUTENTICAÇÃO FIREBASE
 // ================================
 
-// 🎯 CONFIGURAÇÃO GOOGLE SIGN-IN
-function initializeGoogleSignIn() {
-    console.log('🔐 Inicializando Google Sign-In...');
-    
-    try {
-        google.accounts.id.initialize({
-            client_id: CLIENT_ID,
-            callback: handleGoogleSignIn,
-            context: 'signin',
-            ux_mode: 'popup',
-            auto_select: false
-        });
-        
-        // 🎯 CONFIGURAR BOTÃO PERSONALIZADO
-        const googleSignInBtn = document.getElementById('googleSignInBtn');
-        if (googleSignInBtn) {
-            google.accounts.id.renderButton(
-                googleSignInBtn,
-                {
-                    type: 'standard',
-                    theme: 'filled_blue',
-                    size: 'large',
-                    text: 'signin_with',
-                    shape: 'rectangular',
-                    logo_alignment: 'left'
-                }
-            );
-        }
-        
-        // 🎯 OFERECER ONE-TAP SE TIVER COOKIES
-        if (!localStorage.getItem('googleToken')) {
-            google.accounts.id.prompt();
-        }
-        
-        console.log('✅ Google Sign-In inicializado');
-    } catch (error) {
-        console.error('❌ Erro ao inicializar Google Sign-In:', error);
-    }
-}
-
-// 🎯 NOVA FUNÇÃO DE LOGIN (linha ~200)
+// Função de login com Firebase
 async function handleGoogleLogin() {
     try {
-        await loginWithGoogle();
-        // O resto é automático pelo Firebase
+        if (typeof loginWithGoogle !== 'undefined') {
+            await loginWithGoogle();
+        } else {
+            // Fallback - simular login bem-sucedido
+            alert('⚠️ Firebase não carregado - Modo de demonstração');
+            currentUser = {
+                name: "Supervisor Demo",
+                email: "demo@educador.edu.es.gov.br"
+            };
+            mostrarMenu();
+            atualizarInterfaceUsuario();
+            mostrarTela('mainScreen');
+            carregarDocumentos();
+        }
     } catch (error) {
         alert('Erro no login: ' + error.message);
     }
 }
 
-// 🎯 VALIDAÇÃO COM BACKEND (ATUALIZADA)
-async function validateWithBackend(credential) {
-    try {
-        console.log('🔄 Validando token...');
-        
-        const payload = JSON.parse(atob(credential.split('.')[1]));
-        console.log('📧 Email do token:', payload.email);
-        
-        // 🎯 VALIDAÇÃO NO FRONTEND (funciona sempre)
-        if (!payload.email.endsWith('@educador.edu.es.gov.br') && !payload.email.endsWith('@edu.es.gov.br')) {
-            alert('❌ Apenas emails institucionais são permitidos');
-            return;
+// Função de logout
+async function fazerLogout() {
+    if (confirm('Tem certeza que deseja sair?')) {
+        try {
+            if (typeof logout !== 'undefined') {
+                await logout();
+            } else {
+                // Fallback
+                currentUser = null;
+                localStorage.removeItem('supervisionUser');
+                mostrarTela('loginScreen');
+                const navMenu = document.getElementById('navMenu');
+                if (navMenu) navMenu.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Erro no logout:', error);
         }
-        
-        // 🎯 TENTAR BACKEND COM NOVA FUNÇÃO
-        const backendResult = await callBackend('validateToken', { token: credential });
-        
-        if (backendResult && backendResult.success) {
-            console.log('✅ Backend validou token');
-        } else {
-            console.log('⚠️ Backend offline, continuando com frontend');
-        }
-        
-        // 🎯 LOGIN BEM-SUCEDIDO (sempre funciona)
-        handleSuccessfulLogin({
-            email: payload.email,
-            name: payload.name || payload.email.split('@')[0],
-            picture: payload.picture || '',
-            folderId: 'user-' + payload.email
-        }, credential);
-        
-    } catch (error) {
-        console.error('❌ Erro na validação:', error);
-        alert('Erro na autenticação. Tente novamente.');
     }
 }
 
-// 🎯 FUNÇÃO DE LOGIN BEM-SUCEDIDO
-function handleSuccessfulLogin(user, credential) {
-    console.log('✅ Login bem-sucedido:', user);
-    
-    // 🎯 SALVAR DADOS DO USUÁRIO
-    currentUser = {
-        name: user.name,
-        email: user.email,
-        picture: user.picture,
-        folderId: user.folderId,
-        token: credential
-    };
-    
-    localStorage.setItem('supervisionUser', JSON.stringify(currentUser));
-    localStorage.setItem('googleToken', credential);
-    
-    // 🎯 ATUALIZAR INTERFACE
-    mostrarMenu();
-    atualizarInterfaceUsuario();
-    mostrarTela('mainScreen');
-    carregarDocumentos();
-    
-    console.log('✅ Usuário logado com Google:', currentUser.name);
-}
-
-// 🎯 CARREGAR SCRIPT DO GOOGLE SIGN-IN
-function loadGoogleSignInScript() {
-    if (!document.querySelector('script[src*="accounts.google.com"]')) {
-        const script = document.createElement('script');
-        script.src = 'https://accounts.google.com/gsi/client';
-        script.async = true;
-        script.defer = true;
-        script.onload = () => {
-            console.log('✅ Google Sign-In script carregado');
-            initializeGoogleSignIn();
-        };
-        script.onerror = () => {
-            console.error('❌ Falha ao carregar Google Sign-In script');
-        };
-        document.head.appendChild(script);
-    }
-}
-
-function verificarLogin() {
-    const googleToken = localStorage.getItem('googleToken');
+// Verificação de login fallback
+function verificarLoginFallback() {
     const userData = localStorage.getItem('supervisionUser');
     
-    if (googleToken && userData) {
+    if (userData) {
         try {
             currentUser = JSON.parse(userData);
-            console.log('✅ Usuário já logado:', currentUser.name);
+            console.log('✅ Usuário já logado (fallback):', currentUser.name);
             
-            // 🎯 VALIDAR TOKEN NOVAMENTE COM NOVA FUNÇÃO
-            callBackend('validateToken', { token: googleToken })
-                .then(result => {
-                    if (result && result.success) {
-                        carregarConfiguracao();
-                        mostrarMenu();
-                        atualizarInterfaceUsuario();
-                        mostrarTela('mainScreen');
-                        carregarDocumentos();
-                    } else {
-                        console.log('❌ Token inválido, fazendo logout...');
-                        fazerLogout();
-                    }
-                })
-                .catch(() => {
-                    // Em caso de erro, continuar logado (fallback)
-                    carregarConfiguracao();
-                    mostrarMenu();
-                    atualizarInterfaceUsuario();
-                    mostrarTela('mainScreen');
-                    carregarDocumentos();
-                });
+            carregarConfiguracao();
+            mostrarMenu();
+            atualizarInterfaceUsuario();
+            mostrarTela('mainScreen');
+            carregarDocumentos();
             
         } catch (e) {
             console.error('❌ Erro ao carregar usuário:', e);
@@ -555,18 +376,8 @@ function verificarLogin() {
     }
 }
 
-// 🎯 ATUALIZAR FUNÇÃO DE LOGOUT (linha ~250)
-async function fazerLogout() {
-    if (confirm('Tem certeza que deseja sair?')) {
-        try {
-            await logout();
-        } catch (error) {
-            console.error('Erro no logout:', error);
-        }
-    }
-}
 // ================================
-// FUNÇÕES DE INTERFACE (MANTIDAS)
+// FUNÇÕES DE INTERFACE
 // ================================
 
 function mostrarMenu() {
@@ -654,7 +465,7 @@ function toggleMenu() {
 }
 
 // ================================
-// FUNÇÕES DE CONFIGURAÇÃO (MANTIDAS)
+// FUNÇÕES DE CONFIGURAÇÃO
 // ================================
 
 function carregarConfiguracao() {
@@ -750,7 +561,7 @@ function atualizarContadorSelecionadas() {
     }
 }
 
-// 🎯 ATUALIZAR CONFIGURAÇÃO DO SUPERVISOR (linha ~400)
+// Configuração do supervisor
 async function handleSupervisorConfig(e) {
     e.preventDefault();
     
@@ -769,7 +580,13 @@ async function handleSupervisorConfig(e) {
     };
     
     try {
-        await saveSupervisorConfig(config);
+        if (typeof saveSupervisorConfig !== 'undefined') {
+            await saveSupervisorConfig(config);
+        } else {
+            // Fallback - salvar no localStorage
+            localStorage.setItem('supervisorConfig', JSON.stringify(config));
+        }
+        
         supervisorConfig = config;
         alert('✅ Configuração salva com sucesso!');
         mostrarTela('mainScreen');
@@ -795,7 +612,7 @@ function deselectAllSchools() {
 }
 
 // ================================
-// FUNÇÕES DE FORMULÁRIO (MANTIDAS)
+// FUNÇÕES DE FORMULÁRIO
 // ================================
 
 function criarFormularioDocumento(documentId) {
@@ -1094,16 +911,39 @@ function gerarNumeroOfício() {
     return `OF-${numero}`;
 }
 
-// 🎯 ATUALIZAR GERAÇÃO DE DOCUMENTOS (linha ~600)
+// Geração de documentos
 async function gerarDocumentoCompleto(documentType, formData) {
     try {
-        const result = await generateDocument(documentType, formData);
+        let result;
+        
+        if (typeof generateDocument !== 'undefined') {
+            result = await generateDocument(documentType, formData);
+        } else {
+            // Fallback - simular geração
+            result = {
+                success: true,
+                documentId: `${documentType}_${Date.now()}`,
+                links: {
+                    doc: "#",
+                    pdf: "#",
+                    folder: "#"
+                },
+                fileNames: {
+                    doc: `${documentType}_${formData["Nome da Escola"]}.docx`,
+                    pdf: `${documentType}_${formData["Nome da Escola"]}.pdf`
+                }
+            };
+            alert('⚠️ Modo demonstração - Firebase não está configurado');
+        }
+        
         mostrarModalComLinks(result, formData["Nome da Escola"], documentType);
     } catch (error) {
         mostrarModalErro(error.message, formData["Nome da Escola"], documentType);
     }
-}// ================================
-// FUNÇÕES DO MODAL (MANTIDAS)
+}
+
+// ================================
+// FUNÇÕES DO MODAL
 // ================================
 
 function configurarEventosModal() {
@@ -1173,7 +1013,7 @@ function mostrarModalComLinks(resultado, nomeEscola, documentType) {
         </div>
     `;
     
-    if (links.doc) {
+    if (links.doc && links.doc !== "#") {
         const downloadUrl = links.doc.replace('/edit', '/export?format=docx');
         
         linksHTML += `
@@ -1197,7 +1037,7 @@ function mostrarModalComLinks(resultado, nomeEscola, documentType) {
         `;
     }
     
-    if (links.pdf) {
+    if (links.pdf && links.pdf !== "#") {
         const downloadUrl = links.pdf.replace('/view', '?export=download');
         
         linksHTML += `
@@ -1221,7 +1061,7 @@ function mostrarModalComLinks(resultado, nomeEscola, documentType) {
         `;
     }
     
-    if (links.folder) {
+    if (links.folder && links.folder !== "#") {
         linksHTML += `
             <div class="link-item folder-link highlighted">
                 <div class="link-icon">
@@ -1239,6 +1079,15 @@ function mostrarModalComLinks(resultado, nomeEscola, documentType) {
                         <i class="fas fa-external-link-alt"></i>
                     </a>
                 </div>
+            </div>
+        `;
+    }
+    
+    if (links.doc === "#" || links.pdf === "#") {
+        linksHTML += `
+            <div class="info-message">
+                <i class="fas fa-info-circle"></i>
+                <p><strong>Modo de demonstração</strong> - Firebase não está configurado</p>
             </div>
         `;
     }
@@ -1324,39 +1173,15 @@ window.selecionarDocumento = selecionarDocumento;
 window.mostrarTela = mostrarTela;
 window.fazerLogout = fazerLogout;
 
-// 🎯 FUNÇÃO DE DEBUG
+// Função de debug
 function debugLogin() {
     console.log('🔍 DEBUG LOGIN:');
     console.log('- currentUser:', currentUser);
     console.log('- localStorage:', localStorage.getItem('supervisionUser'));
-    console.log('- googleToken:', localStorage.getItem('googleToken'));
+    console.log('- supervisorConfig:', supervisorConfig);
     console.log('- Telas ativas:', document.querySelectorAll('.screen.active'));
 }
 
 window.debugLogin = debugLogin;
 
-// 🎯 TESTE DO BACKEND
-async function testBackendConnection() {
-    console.log('🧪 Testando conexão com backend...');
-    const result = await callBackend('test');
-    console.log('📡 Resultado do teste:', result);
-    return result;
-}
-
-window.testBackendConnection = testBackendConnection;
-
-console.log('🎯 SISTEMA CARREGADO - VERSÃO 6.0 SEM PROBLEMAS DE CORS!');
-
-// 🎯 TESTE AUTOMÁTICO AO CARREGAR
-setTimeout(() => {
-    testBackendConnection().then(result => {
-        if (result && result.success) {
-            console.log('🚀 Sistema totalmente operacional!');
-        } else {
-            console.log('⚠️ Backend offline, usando modo fallback');
-        }
-    });
-}, 2000);
-
-
-
+console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
