@@ -1,4 +1,4 @@
-// firebase-auth.js - SISTEMA DE LOGIN CORRIGIDO
+// firebase-auth.js - SISTEMA DE LOGIN CORRIGIDO (SEM currentUser)
 
 // 🎯 FUNÇÃO DE LOGIN COM GOOGLE
 async function loginWithGoogle() {
@@ -41,29 +41,30 @@ function setupAuthListener() {
     firebaseAuth.onAuthStateChanged((user) => {
         if (user) {
             // 🎯 USUÁRIO LOGOU
-            currentUser = {
+            // currentUser é GLOBAL (definido no script.js)
+            window.currentUser = {
                 uid: user.uid,
                 name: user.displayName,
                 email: user.email,
                 photoURL: user.photoURL
             };
             
-            console.log('👤 Usuário logado:', currentUser.email);
+            console.log('👤 Usuário logado:', window.currentUser.email);
             
             // Salvar no localStorage como backup
-            localStorage.setItem('supervisionUser', JSON.stringify(currentUser));
+            localStorage.setItem('supervisionUser', JSON.stringify(window.currentUser));
             
             // Atualizar interface
             updateUserInterface();
-            mostrarMenu();
-            mostrarTela('mainScreen');
-            carregarDocumentos();
+            if (typeof mostrarMenu === 'function') mostrarMenu();
+            if (typeof mostrarTela === 'function') mostrarTela('mainScreen');
+            if (typeof carregarDocumentos === 'function') carregarDocumentos();
             
         } else {
             // 🎯 USUÁRIO DESLOGOU
-            currentUser = null;
+            window.currentUser = null;
             localStorage.removeItem('supervisionUser');
-            mostrarTela('loginScreen');
+            if (typeof mostrarTela === 'function') mostrarTela('loginScreen');
             
             // Esconder menu
             const navMenu = document.getElementById('navMenu');
@@ -80,15 +81,15 @@ function updateUserInterface() {
     const welcomeName = document.getElementById('welcomeName');
     const userAvatar = document.querySelector('.user-avatar');
     
-    if (currentUser && userName) {
-        userName.textContent = currentUser.name;
+    if (window.currentUser && userName) {
+        userName.textContent = window.currentUser.name;
     }
-    if (currentUser && welcomeName) {
-        welcomeName.textContent = currentUser.name;
+    if (window.currentUser && welcomeName) {
+        welcomeName.textContent = window.currentUser.name;
     }
-    if (currentUser && userAvatar) {
-        if (currentUser.photoURL) {
-            userAvatar.innerHTML = `<img src="${currentUser.photoURL}" alt="${currentUser.name}" style="width:100%;height:100%;border-radius:50%;">`;
+    if (window.currentUser && userAvatar) {
+        if (window.currentUser.photoURL) {
+            userAvatar.innerHTML = `<img src="${window.currentUser.photoURL}" alt="${window.currentUser.name}" style="width:100%;height:100%;border-radius:50%;">`;
         } else {
             userAvatar.innerHTML = '<i class="fas fa-user"></i>';
         }
@@ -98,19 +99,19 @@ function updateUserInterface() {
 // 🎯 INICIAR SISTEMA DE AUTENTICAÇÃO
 function initializeAuth() {
     console.log('🔥 Inicializando autenticação Firebase...');
-    setupAuthListener();
     
-    // Verificar se já está logado
+    // Verificar se já está logado no localStorage
     const savedUser = localStorage.getItem('supervisionUser');
     if (savedUser) {
         try {
-            currentUser = JSON.parse(savedUser);
-            console.log('✅ Usuário recuperado do localStorage:', currentUser.email);
+            window.currentUser = JSON.parse(savedUser);
+            console.log('✅ Usuário recuperado do localStorage:', window.currentUser?.email);
         } catch (e) {
             console.error('❌ Erro ao recuperar usuário:', e);
         }
     }
     
+    setupAuthListener();
     console.log('✅ Sistema de autenticação pronto');
 }
 
@@ -118,4 +119,3 @@ function initializeAuth() {
 window.loginWithGoogle = loginWithGoogle;
 window.logout = logout;
 window.initializeAuth = initializeAuth;
-window.currentUser = currentUser;
