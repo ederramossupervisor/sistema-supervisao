@@ -34,7 +34,7 @@ async function callAppsScriptDirect(data) {
   try {
     console.log('🔗 Tentando chamada direta COM CORS...');
     
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxt1upsPBcs8qJXCjR7VGgoCdFVyNV1ucVob2WV33QoWOuRn0r-40p_hqfCYG87h8-U/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby2PWkhQIulGO_cPyCH3kE407pW8k6FLI_QdK_Tfr36a4TmYh-Zzzy4mkuPTpPfBrjL/exec';
     
     const response = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -70,7 +70,7 @@ async function callAppsScriptNoCors(data) {
   try {
     console.log('🔗 Fallback: Modo no-cors...');
     
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxt1upsPBcs8qJXCjR7VGgoCdFVyNV1ucVob2WV33QoWOuRn0r-40p_hqfCYG87h8-U/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby2PWkhQIulGO_cPyCH3kE407pW8k6FLI_QdK_Tfr36a4TmYh-Zzzy4mkuPTpPfBrjL/exec';
     
     // Enviar sem esperar resposta (modo no-cors)
     await fetch(APPS_SCRIPT_URL, {
@@ -1323,6 +1323,7 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
+
 
 
 
