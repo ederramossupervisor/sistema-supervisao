@@ -1,4 +1,7 @@
-// firebase-auth.js - SISTEMA DE LOGIN
+// firebase-auth.js - SISTEMA DE LOGIN CORRIGIDO
+
+// Estados globais
+let currentUser = null;
 
 // 🎯 FUNÇÃO DE LOGIN COM GOOGLE
 async function loginWithGoogle() {
@@ -16,7 +19,9 @@ async function loginWithGoogle() {
         console.error('❌ Erro no login:', error);
         
         if (error.code === 'auth/popup-closed-by-user') {
-            throw new Error('Login cancelado');
+            throw new Error('Login cancelado pelo usuário');
+        } else if (error.code === 'auth/unauthorized-domain') {
+            throw new Error('Domínio não autorizado. Configure o domínio no Firebase Console.');
         } else {
             throw new Error('Erro no login: ' + error.message);
         }
@@ -34,7 +39,7 @@ async function logout() {
     }
 }
 
-// 🎯 OBSERVAR MUDANÇAS NO LOGIN (quando usuário loga/desloga)
+// 🎯 OBSERVAR MUDANÇAS NO LOGIN
 function setupAuthListener() {
     firebaseAuth.onAuthStateChanged((user) => {
         if (user) {
@@ -48,6 +53,9 @@ function setupAuthListener() {
             
             console.log('👤 Usuário logado:', currentUser.email);
             
+            // Salvar no localStorage como backup
+            localStorage.setItem('supervisionUser', JSON.stringify(currentUser));
+            
             // Atualizar interface
             updateUserInterface();
             mostrarMenu();
@@ -59,6 +67,11 @@ function setupAuthListener() {
             currentUser = null;
             localStorage.removeItem('supervisionUser');
             mostrarTela('loginScreen');
+            
+            // Esconder menu
+            const navMenu = document.getElementById('navMenu');
+            if (navMenu) navMenu.style.display = 'none';
+            
             console.log('🔐 Usuário deslogado');
         }
     });
@@ -76,14 +89,31 @@ function updateUserInterface() {
     if (currentUser && welcomeName) {
         welcomeName.textContent = currentUser.name;
     }
-    if (currentUser && userAvatar && currentUser.photoURL) {
-        userAvatar.innerHTML = `<img src="${currentUser.photoURL}" alt="${currentUser.name}" style="width:100%;height:100%;border-radius:50%;">`;
+    if (currentUser && userAvatar) {
+        if (currentUser.photoURL) {
+            userAvatar.innerHTML = `<img src="${currentUser.photoURL}" alt="${currentUser.name}" style="width:100%;height:100%;border-radius:50%;">`;
+        } else {
+            userAvatar.innerHTML = '<i class="fas fa-user"></i>';
+        }
     }
 }
 
 // 🎯 INICIAR SISTEMA DE AUTENTICAÇÃO
 function initializeAuth() {
+    console.log('🔥 Inicializando autenticação Firebase...');
     setupAuthListener();
+    
+    // Verificar se já está logado
+    const savedUser = localStorage.getItem('supervisionUser');
+    if (savedUser) {
+        try {
+            currentUser = JSON.parse(savedUser);
+            console.log('✅ Usuário recuperado do localStorage:', currentUser.email);
+        } catch (e) {
+            console.error('❌ Erro ao recuperar usuário:', e);
+        }
+    }
+    
     console.log('✅ Sistema de autenticação pronto');
 }
 
