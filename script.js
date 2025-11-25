@@ -7,8 +7,8 @@ let supervisorConfig = null;
 let currentDocumentType = null;
 let currentDocumentLinks = null;
 
-// 🎯 URL DO SEU APPS SCRIPT
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwv-L_DLgWi-F9QvIVGY6yEU-qlbBSqdzjqQKm7Kp_rw0DskdmEP6aXrN04VOhoSRp8/exec';
+// 🎯 NOTA: APPS_SCRIPT_URL já está definida no firebase-documents.js
+// NÃO declare novamente aqui!
 
 // Dados completos das escolas para preenchimento automático
 const ESCOLAS_DATA_FRONTEND = {
@@ -1445,3 +1445,4 @@ window.mostrarTela = mostrarTela;
 window.fazerLogout = fazerLogout;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FINAL!');
+
