@@ -1450,3 +1450,4 @@ window.debugLogin = debugLogin;
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
 
 
+
