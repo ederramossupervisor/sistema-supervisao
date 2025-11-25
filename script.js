@@ -28,35 +28,29 @@ async function callAppsScriptViaProxy(data) {
     throw error;
   }
 }
-// 🎯 FUNÇÃO COM POLLING PARA LINKS REAIS
+// 🎯 FUNÇÃO COM POLLING PARA LINKS REAIS - CORRIGIDA
 async function callAppsScriptDirect(data) {
   try {
-    console.log('🔗 Iniciando processo com polling...');
+    console.log('🔗 Iniciando processo com polling CORRETO...');
     
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby2PWkhQIulGO_cPyCH3kE407pW8k6FLI_QdK_Tfr36a4TmYh-Zzzy4mkuPTpPfBrjL/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxt1upsPBcs8qJXCjR7VGgoCdFVyNV1ucVob2WV33QoWOuRn0r-40p_hqfCYG87h8-U/exec';
     
-    // 🎯 1. INICIAR PROCESSAMENTO ASSÍNCRONO (no-cors - não espera resposta)
-    console.log('📤 Enviando dados para processamento assíncrono...');
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors', // ✅ ACEITA NÃO LER RESPOSTA
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...data,
-        action: 'createDocumentAsync'  // 🎯 AÇÃO NOVA
-      })
+    // 🎯 1. ENVIAR VIA JSONP (técnica alternativa para evitar CORS)
+    console.log('📤 Enviando dados via JSONP...');
+    const documentId = await sendViaJsonp(APPS_SCRIPT_URL, {
+      ...data,
+      action: 'createDocumentAsync'
     });
-
-    console.log('✅ Dados enviados para processamento em background');
     
-    // 🎯 2. GERAR UM ID TEMPORÁRIO PARA POLLING
-    // Como não podemos ler a resposta no-cors, vamos criar um ID local
-    const localDocumentId = 'doc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-    console.log('🆕 ID local para polling:', localDocumentId);
+    if (!documentId) {
+      throw new Error('Não foi possível obter ID do documento');
+    }
     
-    // 🎯 3. FAZER POLLING ATÉ DOCUMENTO FICAR PRONTO
-    console.log('🔄 Iniciando polling...');
-    const pollResult = await pollDocumentStatus(localDocumentId, data);
+    console.log('🆕 ID REAL do documento:', documentId);
+    
+    // 🎯 2. FAZER POLLING COM ID REAL
+    console.log('🔄 Iniciando polling com ID REAL...');
+    const pollResult = await pollDocumentStatus(documentId);
     
     console.log('✅ Polling finalizado com links REAIS:', pollResult);
     return pollResult;
@@ -69,35 +63,83 @@ async function callAppsScriptDirect(data) {
     return await callAppsScriptNoCors(data);
   }
 }
-// 🎯 FUNÇÃO DE POLLING PARA VERIFICAR STATUS
-async function pollDocumentStatus(localDocumentId, originalData) {
+// 🎯 FUNÇÃO PARA ENVIAR DADOS VIA JSONP (evita CORS)
+function sendViaJsonp(url, data) {
+  return new Promise((resolve, reject) => {
+    // 🎯 CRIAR UM ID ÚNICO PARA ESTA REQUISIÇÃO
+    const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+    
+    // 🎯 ADICIONAR script AO DOCUMENTO
+    const script = document.createElement('script');
+    
+    // 🎯 CONSTRUIR URL COM CALLBACK
+    const params = new URLSearchParams({
+      ...data,
+      callback: callbackName
+    });
+    
+    script.src = url + '?' + params.toString();
+    
+    // 🎯 DEFINIR FUNÇÃO DE CALLBACK GLOBAL
+    window[callbackName] = function(response) {
+      // 🎯 LIMPAR
+      delete window[callbackName];
+      document.body.removeChild(script);
+      
+      if (response && response.success && response.documentId) {
+        console.log('✅ JSONP sucesso - ID:', response.documentId);
+        resolve(response.documentId);
+      } else {
+        console.error('❌ JSONP erro:', response);
+        reject(new Error(response?.error || 'Erro no JSONP'));
+      }
+    };
+    
+    // 🎯 TRATAR ERRO
+    script.onerror = function() {
+      delete window[callbackName];
+      document.body.removeChild(script);
+      reject(new Error('Erro de rede no JSONP'));
+    };
+    
+    // 🎯 ADICIONAR SCRIPT PARA EXECUTAR
+    document.body.appendChild(script);
+    
+    console.log('📤 JSONP enviado, aguardando callback...');
+  });
+}
+// 🎯 FUNÇÃO DE POLLING PARA VERIFICAR STATUS - CORRIGIDA
+async function pollDocumentStatus(documentId) {
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxt1upsPBcs8qJXCjR7VGgoCdFVyNV1ucVob2WV33QoWOuRn0r-40p_hqfCYG87h8-U/exec';
   
-  const maxAttempts = 25; // 25 tentativas
-  const pollInterval = 3000; // 3 segundos entre tentativas
+  const maxAttempts = 15; // Reduzido para testes
+  const pollInterval = 4000; // 4 segundos (mais tempo para processar templates)
   
-  console.log(`📊 Iniciando polling (${maxAttempts} tentativas, ${pollInterval}ms intervalo)`);
+  console.log(`📊 Iniciando polling para ID REAL: ${documentId}`);
+  console.log(`⏰ Configuração: ${maxAttempts} tentativas, ${pollInterval}ms intervalo`);
 
   // 🎯 ATUALIZAR MENSAGEM DE LOADING
   const loadingMessage = document.getElementById('loadingMessage');
   
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const currentTime = new Date().toLocaleTimeString();
+    
     if (loadingMessage) {
-      loadingMessage.textContent = `Processando documento... (${attempt}/${maxAttempts})`;
+      loadingMessage.textContent = `Processando documento... ${attempt}/${maxAttempts} (${currentTime})`;
     }
     
-    console.log(`📊 Polling tentativa ${attempt}/${maxAttempts} para ID: ${localDocumentId}`);
+    console.log(`📊 Polling [${attempt}/${maxAttempts}] para: ${documentId}`);
     
     try {
       // 🎯 VERIFICAR STATUS VIA GET (NÃO BLOQUEIA CORS!)
-      const statusResponse = await fetch(`${APPS_SCRIPT_URL}?action=checkStatus&documentId=${localDocumentId}`);
+      const statusResponse = await fetch(`${APPS_SCRIPT_URL}?action=checkStatus&documentId=${documentId}`);
       
       if (statusResponse.ok) {
         const statusResult = await statusResponse.json();
         console.log('📨 Resposta do polling:', statusResult);
         
         if (statusResult.status === 'completed' && statusResult.result) {
-          console.log('🎉 Documento pronto! Links REAIS:', statusResult.result.links);
+          console.log('🎉 DOCUMENTO PRONTO! Links REAIS:', statusResult.result.links);
           return statusResult.result; // 🎯 RETORNAR LINKS REAIS!
         }
         else if (statusResult.status === 'error') {
@@ -107,11 +149,13 @@ async function pollDocumentStatus(localDocumentId, originalData) {
           console.log('🔄 Ainda processando...', statusResult.message);
         }
         else if (statusResult.status === 'not_found') {
-          console.log('📭 Documento não encontrado, continuando polling...');
-          // 🎯 DOCUMENTO NÃO ENCONTRADO É NORMAL NAS PRIMEIRAS TENTATIVAS
+          console.log('📭 Documento não encontrado no servidor');
+          // 🎯 AGUARDAR UM POUCO MAIS SE NÃO ENCONTRADO
+          await new Promise(resolve => setTimeout(resolve, pollInterval + 2000));
+          continue;
         }
       } else {
-        console.log(`⚠️ Status HTTP ${statusResponse.status}, continuando polling...`);
+        console.log(`⚠️ Status HTTP ${statusResponse.status}, continuando...`);
       }
     } catch (error) {
       console.log(`⚠️ Erro na tentativa ${attempt}:`, error.message);
@@ -119,10 +163,14 @@ async function pollDocumentStatus(localDocumentId, originalData) {
     
     // 🎯 AGUARDAR ANTES DA PRÓXIMA TENTATIVA
     if (attempt < maxAttempts) {
-      console.log(`⏳ Aguardando ${pollInterval}ms para próxima tentativa...`);
+      console.log(`⏳ Aguardando ${pollInterval}ms...`);
       await new Promise(resolve => setTimeout(resolve, pollInterval));
     }
   }
+  
+  // 🎯 SE CHEGOU AQUI, TEMPO ESGOTADO
+  throw new Error(`Tempo esgotado (${maxAttempts * pollInterval / 1000} segundos). O documento pode estar sendo processado - verifique seu Google Drive.`);
+}
   
   // 🎯 SE CHEGOU AQUI, TEMPO ESGOTADO
   throw new Error(`Tempo esgotado (${maxAttempts * pollInterval / 1000} segundos). O documento pode estar sendo processado - verifique seu Google Drive em alguns minutos.`);
@@ -1385,6 +1433,7 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
+
 
 
 
