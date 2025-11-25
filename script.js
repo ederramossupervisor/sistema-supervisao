@@ -1,232 +1,14 @@
-// 🎯 SISTEMA SUPERVISÃO - VERSÃO FIREBASE
-console.log('🎯 INICIANDO SISTEMA SUPERVISÃO - VERSÃO FIREBASE');
+// 🎯 SISTEMA SUPERVISÃO - VERSÃO FINAL
+console.log('🎯 INICIANDO SISTEMA SUPERVISÃO - VERSÃO FINAL');
 
 // Estados globais
 let currentUser = null;
 let supervisorConfig = null;
 let currentDocumentType = null;
+let currentDocumentLinks = null;
 
-// 🎯 CONFIGURAÇÃO DO GITHUB ACTIONS PROXY
-const GITHUB_OWNER = 'ederramossupervisor';
-const GITHUB_REPO = 'sistema-supervisao';
-
-// 🎯 FUNÇÃO DE PROXY VIA GITHUB ACTIONS
-async function callAppsScriptViaProxy(data) {
-  try {
-    console.log('🚀 Iniciando sistema de polling...', data.documentType);
-    
-    // 🎯 AGORA VAMOS USAR POLLING
-    const response = await callAppsScriptDirect(data);
-    
-    return response;
-
-  } catch (error) {
-    console.error('❌ Erro no sistema de polling:', error);
-    
-    // 🎯 FALLBACK: Tentar método antigo se polling falhar
-    console.log('🔄 Tentando fallback...');
-    throw error;
-  }
-}
-
-// 🎯 FUNÇÃO COM POLLING PARA LINKS REAIS - CORRIGIDA
-async function callAppsScriptDirect(data) {
-  try {
-    console.log('🔗 Iniciando processo com polling CORRETO...');
-    
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxiEb5WDDdqfAeQX9oZX9-xmwG2FzUdwBGpl5ftl-UgtJUqs97iGBdJcbG0s2_EEuG/exec';
-    
-    // 🎯 1. ENVIAR VIA JSONP (técnica alternativa para evitar CORS)
-    console.log('📤 Enviando dados via JSONP...');
-    const documentId = await sendViaJsonp(APPS_SCRIPT_URL, {
-      ...data,
-      action: 'createDocumentAsync'
-    });
-    
-    if (!documentId) {
-      throw new Error('Não foi possível obter ID do documento');
-    }
-    
-    console.log('🆕 ID REAL do documento:', documentId);
-    
-    // 🎯 2. FAZER POLLING COM ID REAL
-    console.log('🔄 Iniciando polling com ID REAL...');
-    const pollResult = await pollDocumentStatus(documentId);
-    
-    console.log('✅ Polling finalizado com links REAIS:', pollResult);
-    return pollResult;
-
-  } catch (error) {
-    console.error('❌ Erro no processo com polling:', error);
-    
-    // 🎯 FALLBACK: Se polling falhar, usar método antigo
-    console.log('🔄 Usando fallback no-cors...');
-    return await callAppsScriptNoCors(data);
-  }
-}
-
-// 🎯 FUNÇÃO PARA ENVIAR DADOS VIA JSONP (evita CORS)
-function sendViaJsonp(url, data) {
-  return new Promise((resolve, reject) => {
-    // 🎯 CRIAR UM ID ÚNICO PARA ESTA REQUISIÇÃO
-    const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
-    
-    // 🎯 ADICIONAR script AO DOCUMENTO
-    const script = document.createElement('script');
-    
-    // 🎯 CONSTRUIR URL COM CALLBACK
-    const params = new URLSearchParams({
-      ...data,
-      callback: callbackName
-    });
-    
-    script.src = url + '?' + params.toString();
-    
-    // 🎯 DEFINIR FUNÇÃO DE CALLBACK GLOBAL
-    window[callbackName] = function(response) {
-      // 🎯 LIMPAR
-      delete window[callbackName];
-      document.body.removeChild(script);
-      
-      if (response && response.success && response.documentId) {
-        console.log('✅ JSONP sucesso - ID:', response.documentId);
-        resolve(response.documentId);
-      } else {
-        console.error('❌ JSONP erro:', response);
-        reject(new Error(response?.error || 'Erro no JSONP'));
-      }
-    };
-    
-    // 🎯 TRATAR ERRO
-    script.onerror = function() {
-      delete window[callbackName];
-      document.body.removeChild(script);
-      reject(new Error('Erro de rede no JSONP'));
-    };
-    
-    // 🎯 ADICIONAR SCRIPT PARA EXECUTAR
-    document.body.appendChild(script);
-    
-    console.log('📤 JSONP enviado, aguardando callback...');
-  });
-}
-
-// 🎯 FUNÇÃO DE POLLING PARA VERIFICAR STATUS - CORRIGIDA E COMPLETA
-async function pollDocumentStatus(documentId) {
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxiEb5WDDdqfAeQX9oZX9-xmwG2FzUdwBGpl5ftl-UgtJUqs97iGBdJcbG0s2_EEuG/exec';
-  
-  const maxAttempts = 15; // Reduzido para testes
-  const pollInterval = 4000; // 4 segundos (mais tempo para processar templates)
-  
-  console.log(`📊 Iniciando polling para ID REAL: ${documentId}`);
-  console.log(`⏰ Configuração: ${maxAttempts} tentativas, ${pollInterval}ms intervalo`);
-
-  // 🎯 ATUALIZAR MENSAGEM DE LOADING
-  const loadingMessage = document.getElementById('loadingMessage');
-  
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const currentTime = new Date().toLocaleTimeString();
-    
-    if (loadingMessage) {
-      loadingMessage.textContent = `Processando documento... ${attempt}/${maxAttempts} (${currentTime})`;
-    }
-    
-    console.log(`📊 Polling [${attempt}/${maxAttempts}] para: ${documentId}`);
-    
-    try {
-      // 🎯 VERIFICAR STATUS VIA GET (NÃO BLOQUEIA CORS!)
-      const statusResponse = await fetch(`${APPS_SCRIPT_URL}?action=checkStatus&documentId=${documentId}`);
-      
-      if (statusResponse.ok) {
-        const statusResult = await statusResponse.json();
-        console.log('📨 Resposta do polling:', statusResult);
-        
-        if (statusResult.status === 'completed' && statusResult.result) {
-          console.log('🎉 DOCUMENTO PRONTO! Links REAIS:', statusResult.result.links);
-          return statusResult.result; // 🎯 RETORNAR LINKS REAIS!
-        }
-        else if (statusResult.status === 'error') {
-          throw new Error(statusResult.error || 'Erro no processamento do documento');
-        }
-        else if (statusResult.status === 'processing') {
-          console.log('🔄 Ainda processando...', statusResult.message);
-        }
-        else if (statusResult.status === 'not_found') {
-          console.log('📭 Documento não encontrado no servidor');
-          // 🎯 AGUARDAR UM POUCO MAIS SE NÃO ENCONTRADO
-          await new Promise(resolve => setTimeout(resolve, pollInterval + 2000));
-          continue;
-        }
-      } else {
-        console.log(`⚠️ Status HTTP ${statusResponse.status}, continuando...`);
-      }
-    } catch (error) {
-      console.log(`⚠️ Erro na tentativa ${attempt}:`, error.message);
-    }
-    
-    // 🎯 AGUARDAR ANTES DA PRÓXIMA TENTATIVA
-    if (attempt < maxAttempts) {
-      console.log(`⏳ Aguardando ${pollInterval}ms...`);
-      await new Promise(resolve => setTimeout(resolve, pollInterval));
-    }
-  }
-  
-  // 🎯 SE CHEGOU AQUI, TEMPO ESGOTADO
-  throw new Error(`Tempo esgotado (${maxAttempts * pollInterval / 1000} segundos). O documento pode estar sendo processado - verifique seu Google Drive.`);
-}
-
-// 🎯 FUNÇÃO FALLBACK - MODO NO-CORS (SE CORS AINDA FALHAR)
-async function callAppsScriptNoCors(data) {
-  try {
-    console.log('🔗 Fallback: Modo no-cors...');
-    
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxiEb5WDDdqfAeQX9oZX9-xmwG2FzUdwBGpl5ftl-UgtJUqs97iGBdJcbG0s2_EEuG/exec';
-    
-    // Enviar sem esperar resposta (modo no-cors)
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      mode: 'no-cors',
-      body: JSON.stringify(data)
-    });
-
-    console.log('✅ Requisição enviada (modo no-cors)');
-    
-    // 🎯 Retornar resposta otimista
-    return {
-      success: true,
-      message: "Documento em processamento - os links reais estarão no Google Drive",
-      links: {
-        doc: "#",
-        pdf: "#", 
-        folder: "#"
-      },
-      fileNames: {
-        doc: "Documento_Em_Processamento.docx",
-        pdf: "Documento_Em_Processamento.pdf"
-      },
-      timestamp: new Date().toISOString(),
-      note: "Verifique seu Google Drive em alguns instantes"
-    };
-
-  } catch (error) {
-    console.error('❌ Erro no fallback no-cors:', error);
-    throw new Error('Falha na comunicação com o servidor: ' + error.message);
-  }
-}
-
-// 🎯 FUNÇÃO PARA ATUALIZAR INTERFACE DO USUÁRIO
-function atualizarInterfaceUsuario() {
-    const userName = document.getElementById('userName');
-    const welcomeName = document.getElementById('welcomeName');
-    
-    if (currentUser && userName) userName.textContent = currentUser.name;
-    if (currentUser && welcomeName) welcomeName.textContent = currentUser.name;
-    
-    console.log('👤 Interface atualizada para:', currentUser?.name);
-}
+// 🎯 URL DO SEU APPS SCRIPT
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwv-L_DLgWi-F9QvIVGY6yEU-qlbBSqdzjqQKm7Kp_rw0DskdmEP6aXrN04VOhoSRp8/exec';
 
 // Dados completos das escolas para preenchimento automático
 const ESCOLAS_DATA_FRONTEND = {
@@ -388,39 +170,7 @@ const APP_DATA = {
     ],
     
     dropdowns: {
-        escolas: [
-            "CEEFMTI AFONSO CLÁUDIO",
-            "CEEFMTI ELISA PAIVA", 
-            "EEEF DOMINGOS PERIM",
-            "EEEFM ALTO RIO POSSMOSER",
-            "EEEFM ÁLVARO CASTELO",
-            "EEEFM ELVIRA BARROS",
-            "EEEFM FAZENDA CAMPORÊS",
-            "EEEFM FAZENDA EMÍLIO SCHROEDER",
-            "EEEFM FIORAVANTE CALIMAN",
-            "EEEFM FREDERICO BOLDT",
-            "EEEFM GISELA SALLOKER FAYET",
-            "EEEFM GRAÇA ARANHA",
-            "EEEFM JOAQUIM CAETANO DE PAIVA",
-            "EEEFM JOSE CUPERTINO",
-            "EEEFM JOSE GIESTAS",
-            "EEEFM JOSÉ ROBERTO CHRISTO",
-            "EEEFM LEOGILDO SEVERIANO DE SOUZA",
-            "EEEFM LUIZ JOUFFROY",
-            "EEEFM MARIA DE ABREU ALVIM",
-            "EEEFM MARLENE BRANDÃO",
-            "EEEFM PEDRA AZUL",
-            "EEEFM PONTO DO ALTO",
-            "EEEFM PROFª ALDY SOARES MERÇON VARGAS",
-            "EEEFM PROF HERMANN BERGER",
-            "EEEFM SÃO JORGE",
-            "EEEFM SÃO LUÍS",
-            "EEEFM TEOFILO PAULINO",
-            "EEEM FRANCISCO GUILHERME",
-            "EEEM MATA FRIA",
-            "EEEM SOBREIRO"
-        ],
-        
+        escolas: Object.keys(ESCOLAS_DATA_FRONTEND),
         motivo_contratacao: [
             "Lista esgotada",
             "Substituição",
@@ -429,13 +179,11 @@ const APP_DATA = {
             "Licença maternidade",
             "Outros"
         ],
-        
         oferta: [
             "Regular",
             "EJA/Neeja", 
             "Técnico"
         ],
-        
         serie: [
             "1º ano",
             "2º ano", 
@@ -472,8 +220,6 @@ function iniciarSistema() {
         if (loading) {
             loading.style.display = 'none';
             console.log('✅ Loading escondido');
-        } else {
-            console.log('⚠️ Elemento loading não encontrado');
         }
     }, 1000);
     
@@ -526,10 +272,12 @@ function configurarEventos() {
     
     // Configurar eventos do modal
     configurarEventosModal();
+    configurarVisualizador();
+    configurarBotaoVisualizar();
 }
 
 // ================================
-// 🎯 AUTENTICAÇÃO FIREBASE
+// 🎯 AUTENTICAÇÃO
 // ================================
 
 // Função de login com Firebase
@@ -593,8 +341,6 @@ function verificarLoginFallback() {
             console.error('❌ Erro ao carregar usuário:', e);
             fazerLogout();
         }
-    } else {
-        console.log('🔐 Usuário não logado, aguardando autenticação...');
     }
 }
 
@@ -1133,6 +879,10 @@ function gerarNumeroOfício() {
     return `OF-${numero}`;
 }
 
+// ================================
+// 🎯 GERAÇÃO DE DOCUMENTOS
+// ================================
+
 async function gerarDocumentoCompleto(documentType, formData) {
   try {
     console.log('📝 Iniciando geração de documento...');
@@ -1164,9 +914,6 @@ async function gerarDocumentoCompleto(documentType, formData) {
       loadingMessage.textContent = 'Criando documento no seu Google Drive...';
     }
 
-    // 🎯 URL DO SEU APPS SCRIPT (ATUALIZE COM SUA URL)
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxiEb5WDDdqfAeQX9oZX9-xmwG2FzUdwBGpl5ftl-UgtJUqs97iGBdJcbG0s2_EEuG/exec';
-    
     const response = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: {
@@ -1205,8 +952,243 @@ async function gerarDocumentoCompleto(documentType, formData) {
     mostrarModalErro(error.message, formData["Nome da Escola"], documentType);
   }
 }
+
 // ================================
-// FUNÇÕES DO MODAL
+// 🎯 SISTEMA DE VISUALIZAÇÃO
+// ================================
+
+function configurarVisualizador() {
+    const viewerModal = document.getElementById('viewerModal');
+    const closeViewer = document.getElementById('closeViewer');
+    const viewerTabs = document.querySelectorAll('.viewer-tab');
+    const downloadPdf = document.getElementById('downloadPdf');
+    const downloadDoc = document.getElementById('downloadDoc');
+    const openExternal = document.getElementById('openExternal');
+    const documentViewer = document.getElementById('documentViewer');
+    const iframeLoading = document.getElementById('iframeLoading');
+
+    // Fechar modal
+    if (closeViewer) {
+        closeViewer.addEventListener('click', () => {
+            viewerModal.classList.remove('show');
+            documentViewer.src = 'about:blank';
+        });
+    }
+
+    // Trocar entre PDF, DOC e PASTA
+    viewerTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            // Ativar tab clicada
+            viewerTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            const type = this.dataset.type;
+            carregarDocumentoNoIframe(type);
+        });
+    });
+
+    // Download PDF
+    if (downloadPdf) {
+        downloadPdf.addEventListener('click', function() {
+            if (currentDocumentLinks?.pdf) {
+                const downloadUrl = currentDocumentLinks.pdf.replace('/preview', '?export=download');
+                window.open(downloadUrl, '_blank');
+            }
+        });
+    }
+
+    // Download DOC
+    if (downloadDoc) {
+        downloadDoc.addEventListener('click', function() {
+            if (currentDocumentLinks?.doc) {
+                const downloadUrl = currentDocumentLinks.doc.replace('/preview', '/export?format=docx');
+                window.open(downloadUrl, '_blank');
+            }
+        });
+    }
+
+    // Abrir externamente
+    if (openExternal) {
+        openExternal.addEventListener('click', function() {
+            const activeTab = document.querySelector('.viewer-tab.active');
+            if (activeTab) {
+                const type = activeTab.dataset.type;
+                if (type === 'pdf' && currentDocumentLinks?.pdf) {
+                    window.open(currentDocumentLinks.pdf.replace('/preview', '/view'), '_blank');
+                } else if (type === 'doc' && currentDocumentLinks?.doc) {
+                    window.open(currentDocumentLinks.doc.replace('/preview', '/edit'), '_blank');
+                } else if (type === 'folder' && currentDocumentLinks?.folder) {
+                    window.open(currentDocumentLinks.folder, '_blank');
+                }
+            }
+        });
+    }
+
+    // Fechar modal ao clicar fora
+    if (viewerModal) {
+        viewerModal.addEventListener('click', (e) => {
+            if (e.target === viewerModal) {
+                viewerModal.classList.remove('show');
+                documentViewer.src = 'about:blank';
+            }
+        });
+    }
+
+    // Loading do iframe
+    if (documentViewer) {
+        documentViewer.addEventListener('load', function() {
+            console.log('✅ Iframe carregado com sucesso');
+            if (iframeLoading) iframeLoading.style.display = 'none';
+        });
+
+        documentViewer.addEventListener('error', function() {
+            console.error('❌ Erro ao carregar iframe');
+            if (iframeLoading) iframeLoading.style.display = 'none';
+            mostrarErroIframe();
+        });
+    }
+}
+
+// 🎯 CARREGAR DOCUMENTO NO IFRAME
+function carregarDocumentoNoIframe(type) {
+    const documentViewer = document.getElementById('documentViewer');
+    const iframeLoading = document.getElementById('iframeLoading');
+    
+    if (!documentViewer || !currentDocumentLinks) {
+        console.error('❌ Iframe ou links não disponíveis');
+        return;
+    }
+
+    // Mostrar loading
+    if (iframeLoading) iframeLoading.style.display = 'block';
+
+    if (type === 'folder') {
+        // Para pasta, mostrar mensagem personalizada
+        documentViewer.srcdoc = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { 
+                        font-family: 'Poppins', sans-serif; 
+                        display: flex; 
+                        align-items: center; 
+                        justify-content: center; 
+                        height: 100vh; 
+                        margin: 0; 
+                        background: var(--gradient);
+                        color: white;
+                    }
+                    .folder-content { 
+                        text-align: center; 
+                        padding: 3rem;
+                        background: rgba(255,255,255,0.1);
+                        border-radius: 20px;
+                        backdrop-filter: blur(10px);
+                    }
+                    .folder-icon { 
+                        font-size: 4rem; 
+                        margin-bottom: 1rem;
+                        color: white;
+                    }
+                    h3 { 
+                        margin-bottom: 1rem;
+                        font-size: 1.5rem;
+                    }
+                    .btn-open {
+                        background: white;
+                        color: var(--primary);
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 50px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        margin-top: 1rem;
+                        text-decoration: none;
+                        display: inline-block;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="folder-content">
+                    <div class="folder-icon">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                    <h3>Sua Pasta Pessoal</h3>
+                    <p>Seus documentos foram salvos em sua pasta pessoal do Google Drive</p>
+                    <p><strong>Estrutura:</strong><br>
+                    Documentos Supervisão → Escola → Tipo de Documento</p>
+                    <button class="btn-open" onclick="window.open('${currentDocumentLinks.folder}', '_blank')">
+                        <i class="fas fa-external-link-alt"></i>
+                        Abrir Minha Pasta no Drive
+                    </button>
+                </div>
+            </body>
+            </html>
+        `;
+        if (iframeLoading) iframeLoading.style.display = 'none';
+    } else {
+        const url = type === 'pdf' ? currentDocumentLinks.pdf : currentDocumentLinks.doc;
+        
+        if (url && url !== '#') {
+            console.log(`📄 Carregando ${type.toUpperCase()} no iframe:`, url);
+            documentViewer.src = url;
+        } else {
+            if (iframeLoading) iframeLoading.style.display = 'none';
+            mostrarErroIframe('Link de visualização não disponível');
+        }
+    }
+}
+
+// 🎯 MOSTRAR ERRO NO IFRAME
+function mostrarErroIframe(mensagem = 'Erro ao carregar documento') {
+    const documentViewer = document.getElementById('documentViewer');
+    if (documentViewer) {
+        documentViewer.srcdoc = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { 
+                        font-family: 'Poppins', sans-serif; 
+                        display: flex; 
+                        align-items: center; 
+                        justify-content: center; 
+                        height: 100vh; 
+                        margin: 0; 
+                        background: #f8fafc;
+                        color: #64748b;
+                    }
+                    .error-content { 
+                        text-align: center; 
+                        padding: 2rem;
+                    }
+                    .error-icon { 
+                        font-size: 3rem; 
+                        color: #ef4444; 
+                        margin-bottom: 1rem;
+                    }
+                    h3 { 
+                        color: #dc2626; 
+                        margin-bottom: 0.5rem;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="error-content">
+                    <div class="error-icon">⚠️</div>
+                    <h3>Erro ao Carregar</h3>
+                    <p>${mensagem}</p>
+                    <small>Tente abrir o documento diretamente no Google Drive</small>
+                </div>
+            </body>
+            </html>
+        `;
+    }
+}
+
+// ================================
+// 🎯 MODAIS
 // ================================
 
 function configurarEventosModal() {
@@ -1245,8 +1227,34 @@ function configurarEventosModal() {
     }
 }
 
+function configurarBotaoVisualizar() {
+    const viewBtn = document.getElementById('viewDocuments');
+    if (viewBtn) {
+        viewBtn.addEventListener('click', function() {
+            // Fechar modal de resultado
+            const resultModal = document.getElementById('resultModal');
+            if (resultModal) {
+                resultModal.classList.remove('show');
+            }
+            
+            // Abrir visualizador
+            const viewerModal = document.getElementById('viewerModal');
+            if (viewerModal) {
+                viewerModal.classList.add('show');
+                
+                // Carregar PDF por padrão
+                setTimeout(() => {
+                    carregarDocumentoNoIframe('pdf');
+                }, 500);
+            }
+        });
+    }
+}
+
 function mostrarModalComLinks(resultado, nomeEscola, documentType) {
     console.log('🎯 Mostrando modal com links...', resultado);
+    
+    currentDocumentLinks = resultado.links || {};
     
     const modal = document.getElementById('resultModal');
     const modalSchool = document.getElementById('modalSchool');
@@ -1277,7 +1285,7 @@ function mostrarModalComLinks(resultado, nomeEscola, documentType) {
     `;
     
     if (links.doc && links.doc !== "#") {
-        const downloadUrl = links.doc.replace('/edit', '/export?format=docx');
+        const downloadUrl = links.doc.replace('/preview', '/export?format=docx');
         
         linksHTML += `
             <div class="link-item doc-link highlighted">
@@ -1301,7 +1309,7 @@ function mostrarModalComLinks(resultado, nomeEscola, documentType) {
     }
     
     if (links.pdf && links.pdf !== "#") {
-        const downloadUrl = links.pdf.replace('/view', '?export=download');
+        const downloadUrl = links.pdf.replace('/preview', '?export=download');
         
         linksHTML += `
             <div class="link-item pdf-link">
@@ -1436,18 +1444,4 @@ window.selecionarDocumento = selecionarDocumento;
 window.mostrarTela = mostrarTela;
 window.fazerLogout = fazerLogout;
 
-// Função de debug
-function debugLogin() {
-    console.log('🔍 DEBUG LOGIN:');
-    console.log('- currentUser:', currentUser);
-    console.log('- localStorage:', localStorage.getItem('supervisionUser'));
-    console.log('- supervisorConfig:', supervisorConfig);
-    console.log('- Telas ativas:', document.querySelectorAll('.screen.active'));
-}
-
-window.debugLogin = debugLogin;
-
-console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
-
-
-
+console.log('🎯 SISTEMA CARREGADO - VERSÃO FINAL!');
