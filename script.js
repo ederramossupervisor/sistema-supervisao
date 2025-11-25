@@ -168,6 +168,17 @@ async function pollDocumentStatus(documentId) {
     }
   }
   
+  // 🎯 SE CHEGOU AQUI, TEMPO ESGOTADO (APENAS UMA VEZ!)
+  throw new Error(`Tempo esgotado (${maxAttempts * pollInterval / 1000} segundos). O documento pode estar sendo processado - verifique seu Google Drive.`);
+}
+    
+    // 🎯 AGUARDAR ANTES DA PRÓXIMA TENTATIVA
+    if (attempt < maxAttempts) {
+      console.log(`⏳ Aguardando ${pollInterval}ms...`);
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    }
+  }
+  
   // 🎯 SE CHEGOU AQUI, TEMPO ESGOTADO
   throw new Error(`Tempo esgotado (${maxAttempts * pollInterval / 1000} segundos). O documento pode estar sendo processado - verifique seu Google Drive.`);
 }
@@ -1433,6 +1444,7 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
+
 
 
 
