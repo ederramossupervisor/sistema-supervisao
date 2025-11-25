@@ -1,4 +1,4 @@
-// firebase-config.js - CONFIGURAÇÃO CORRIGIDA E SIMPLIFICADA
+// firebase-config.js - VERSÃO CORRIGIDA
 
 // 🎯 CONFIGURAÇÃO DO FIREBASE
 const firebaseConfig = {
@@ -25,15 +25,20 @@ try {
     // Configurar domínio para login educacional
     googleProvider.setCustomParameters({
         prompt: 'select_account',
-        hd: 'educador.edu.es.gov.br' // Restringe ao domínio educacional
+        hd: 'educador.edu.es.gov.br'
     });
+    
+    // 🎯 EXPORTAR PARA USO GLOBAL
+    window.firebaseAuth = firebaseAuth;
+    window.googleProvider = googleProvider;
+    window.firebaseDb = firebaseDb;
     
     console.log('🔥 Firebase configurado com sucesso!');
     
 } catch (error) {
     console.error('❌ Erro ao configurar Firebase:', error);
     
-    // 🎯 FALLBACK - Criar objetos vazios para evitar erros
+    // 🎯 FALLBACK
     window.firebaseAuth = {
         signInWithPopup: () => Promise.reject(new Error('Firebase não carregado')),
         signOut: () => Promise.reject(new Error('Firebase não carregado')),
@@ -41,4 +46,5 @@ try {
     };
     
     window.googleProvider = {};
+    window.firebaseDb = {};
 }
