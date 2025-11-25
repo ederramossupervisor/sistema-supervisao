@@ -34,7 +34,7 @@ async function callAppsScriptDirect(data) {
   try {
     console.log('🔗 Iniciando processo com polling CORRETO...');
     
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLVtLlQ3KXlgTQayyhYYVThuQyUlfsftjAoQ9guVQs7AKOdXWlVrzCARUszYta1d_A/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxiEb5WDDdqfAeQX9oZX9-xmwG2FzUdwBGpl5ftl-UgtJUqs97iGBdJcbG0s2_EEuG/exec';
     
     // 🎯 1. ENVIAR VIA JSONP (técnica alternativa para evitar CORS)
     console.log('📤 Enviando dados via JSONP...');
@@ -113,7 +113,7 @@ function sendViaJsonp(url, data) {
 
 // 🎯 FUNÇÃO DE POLLING PARA VERIFICAR STATUS - CORRIGIDA E COMPLETA
 async function pollDocumentStatus(documentId) {
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLVtLlQ3KXlgTQayyhYYVThuQyUlfsftjAoQ9guVQs7AKOdXWlVrzCARUszYta1d_A/exec';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxiEb5WDDdqfAeQX9oZX9-xmwG2FzUdwBGpl5ftl-UgtJUqs97iGBdJcbG0s2_EEuG/exec';
   
   const maxAttempts = 15; // Reduzido para testes
   const pollInterval = 4000; // 4 segundos (mais tempo para processar templates)
@@ -180,7 +180,7 @@ async function callAppsScriptNoCors(data) {
   try {
     console.log('🔗 Fallback: Modo no-cors...');
     
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby2PWkhQIulGO_cPyCH3kE407pW8k6FLI_QdK_Tfr36a4TmYh-Zzzy4mkuPTpPfBrjL/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxiEb5WDDdqfAeQX9oZX9-xmwG2FzUdwBGpl5ftl-UgtJUqs97iGBdJcbG0s2_EEuG/exec';
     
     // Enviar sem esperar resposta (modo no-cors)
     await fetch(APPS_SCRIPT_URL, {
@@ -1165,7 +1165,7 @@ async function gerarDocumentoCompleto(documentType, formData) {
     }
 
     // 🎯 URL DO SEU APPS SCRIPT (ATUALIZE COM SUA URL)
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/SUA_URL_DO_APPS_SCRIPT/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxiEb5WDDdqfAeQX9oZX9-xmwG2FzUdwBGpl5ftl-UgtJUqs97iGBdJcbG0s2_EEuG/exec';
     
     const response = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -1448,4 +1448,5 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
+
 
