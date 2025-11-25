@@ -51,7 +51,7 @@ async function generateDocument(documentType, formData, userInfo) {
         };
         
         // 🎯 URL DO SEU APPS SCRIPT (ATUALIZE ESTA LINHA!)
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/SUA_URL_DO_APPS_SCRIPT/exec';
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzxiEb5WDDdqfAeQX9oZX9-xmwG2FzUdwBGpl5ftl-UgtJUqs97iGBdJcbG0s2_EEuG/exec';
         
         console.log('📤 Enviando para:', APPS_SCRIPT_URL);
         
