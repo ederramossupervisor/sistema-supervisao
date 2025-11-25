@@ -1,4 +1,6 @@
-// firebase-config.js - CONFIGURAÇÃO CORRIGIDA
+// firebase-config.js - CONFIGURAÇÃO CORRIGIDA E SIMPLIFICADA
+
+// 🎯 CONFIGURAÇÃO DO FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyCv55TRkGPiCMoQ53rmksfjb9As2rujVcE",
     authDomain: "supervisaosreac.firebaseapp.com",
@@ -8,16 +10,35 @@ const firebaseConfig = {
     appId: "1:693190287842:web:b7d3972bc5af328d7419bb"
 };
 
-// Inicializar Firebase
-const app = firebase.initializeApp(firebaseConfig);
-const firebaseAuth = firebase.auth();
-const firebaseDb = firebase.firestore();
-const googleProvider = new firebase.auth.GoogleAuthProvider();
-
-// Configurar domínio para login educacional
-googleProvider.setCustomParameters({
-    prompt: 'select_account',
-    hd: 'educador.edu.es.gov.br' // Restringe ao domínio educacional
-});
-
-console.log('🔥 Firebase configurado com sucesso!');
+// 🎯 INICIALIZAR FIREBASE
+try {
+    // Verificar se Firebase já foi inicializado
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    
+    // 🎯 INICIALIZAR SERVIÇOS
+    const firebaseAuth = firebase.auth();
+    const firebaseDb = firebase.firestore();
+    const googleProvider = new firebase.auth.GoogleAuthProvider();
+    
+    // Configurar domínio para login educacional
+    googleProvider.setCustomParameters({
+        prompt: 'select_account',
+        hd: 'educador.edu.es.gov.br' // Restringe ao domínio educacional
+    });
+    
+    console.log('🔥 Firebase configurado com sucesso!');
+    
+} catch (error) {
+    console.error('❌ Erro ao configurar Firebase:', error);
+    
+    // 🎯 FALLBACK - Criar objetos vazios para evitar erros
+    window.firebaseAuth = {
+        signInWithPopup: () => Promise.reject(new Error('Firebase não carregado')),
+        signOut: () => Promise.reject(new Error('Firebase não carregado')),
+        onAuthStateChanged: () => {}
+    };
+    
+    window.googleProvider = {};
+}
