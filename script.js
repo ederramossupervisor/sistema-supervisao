@@ -1133,66 +1133,78 @@ function gerarNumeroOfício() {
     return `OF-${numero}`;
 }
 
-// Geração de documentos ATUALIZADA
 async function gerarDocumentoCompleto(documentType, formData) {
-    try {
-        console.log('📝 Iniciando geração de documento via proxy...');
-        
-        // Mostrar loading
-        const loadingModal = document.getElementById('loadingModal');
-        const loadingMessage = document.getElementById('loadingMessage');
-        if (loadingModal) {
-            loadingModal.style.display = 'block';
-            loadingMessage.textContent = 'Conectando com o servidor...';
-        }
-
-        // Preparar dados para envio
-        const requestData = {
-            action: "createDocument",
-            userEmail: currentUser?.email || "demo@educador.edu.es.gov.br",
-            documentType: documentType,
-            formData: formData,
-            userInfo: {
-                name: currentUser?.name || "Supervisor Demo",
-                schools: supervisorConfig?.schools || []
-            }
-        };
-
-        console.log('📤 Enviando para proxy:', requestData);
-
-        // Atualizar mensagem de loading
-        if (loadingMessage) {
-            loadingMessage.textContent = 'Iniciando processamento...';
-        }
-
-        // Chamar via GitHub Actions proxy
-        const result = await callAppsScriptViaProxy(requestData);
-        
-        // Esconder loading
-        if (loadingModal) {
-            loadingModal.style.display = 'none';
-        }
-
-        if (result.success) {
-            console.log('🎉 Documentos gerados com sucesso!', result);
-            mostrarModalComLinks(result, formData["Nome da Escola"], documentType);
-        } else {
-            throw new Error(result.error || 'Erro desconhecido ao gerar documentos');
-        }
-
-    } catch (error) {
-        console.error('💥 Erro crítico:', error);
-        
-        // Esconder loading em caso de erro
-        const loadingModal = document.getElementById('loadingModal');
-        if (loadingModal) {
-            loadingModal.style.display = 'none';
-        }
-        
-        mostrarModalErro(error.message, formData["Nome da Escola"], documentType);
+  try {
+    console.log('📝 Iniciando geração de documento...');
+    
+    // Mostrar loading
+    const loadingModal = document.getElementById('loadingModal');
+    const loadingMessage = document.getElementById('loadingMessage');
+    if (loadingModal) {
+      loadingModal.style.display = 'block';
+      loadingMessage.textContent = 'Conectando com o servidor...';
     }
-}
 
+    // Preparar dados para envio
+    const requestData = {
+      action: "createDocument",
+      userEmail: currentUser?.email || "demo@educador.edu.es.gov.br",
+      documentType: documentType,
+      formData: formData,
+      userInfo: {
+        name: currentUser?.name || "Supervisor Demo",
+        schools: supervisorConfig?.schools || []
+      }
+    };
+
+    console.log('📤 Enviando para Apps Script...');
+
+    // Atualizar mensagem de loading
+    if (loadingMessage) {
+      loadingMessage.textContent = 'Criando documento no seu Google Drive...';
+    }
+
+    // 🎯 URL DO SEU APPS SCRIPT (ATUALIZE COM SUA URL)
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/SUA_URL_DO_APPS_SCRIPT/exec';
+    
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    // Esconder loading
+    if (loadingModal) {
+      loadingModal.style.display = 'none';
+    }
+
+    if (result.success) {
+      console.log('🎉 Documentos gerados com sucesso no Drive do usuário!', result);
+      mostrarModalComLinks(result, formData["Nome da Escola"], documentType);
+    } else {
+      throw new Error(result.error || 'Erro ao gerar documentos');
+    }
+
+  } catch (error) {
+    console.error('💥 Erro crítico:', error);
+    
+    // Esconder loading em caso de erro
+    const loadingModal = document.getElementById('loadingModal');
+    if (loadingModal) {
+      loadingModal.style.display = 'none';
+    }
+    
+    mostrarModalErro(error.message, formData["Nome da Escola"], documentType);
+  }
+}
 // ================================
 // FUNÇÕES DO MODAL
 // ================================
@@ -1436,3 +1448,4 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
+
