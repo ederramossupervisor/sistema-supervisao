@@ -15,7 +15,7 @@
     <link rel="apple-touch-icon" href="icons/icon-180x180.png">
     
     <!-- CSS -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="icons/icon-192x192.png">
     
@@ -83,7 +83,7 @@
                     </div>
                     <p class="login-subtitle">Geração automatizada de documentos educacionais</p>
                     
-                    <!-- 🎯 BOTÃO FIREBASE CORRETO -->
+                    <!-- 🎯 BOTÃO FIREBASE -->
                     <div class="google-login-section">
                         <button id="googleLoginBtn" class="btn-google">
                             <i class="fab fa-google"></i>
@@ -121,7 +121,7 @@
                     <form id="supervisorForm">
                         <div class="form-group">
                             <label for="supervisorName">Nome do Supervisor *</label>
-                            <input type="text" id="supervisorName" required placeholder="Digite seu nome completo">
+                            <input type="text" id="supervisorName" class="form-field" required placeholder="Digite seu nome completo">
                             <small>Este nome será usado automaticamente nos documentos</small>
                         </div>
                         
@@ -228,6 +228,10 @@
                 </div>
                 
                 <div class="modal-actions">
+                    <button id="viewDocuments" class="btn-primary">
+                        <i class="fas fa-eye"></i>
+                        Visualizar Documentos
+                    </button>
                     <button id="newDocument" class="btn-primary">
                         <i class="fas fa-plus"></i>
                         Novo Documento
@@ -241,6 +245,56 @@
         </div>
     </div>
 
+    <!-- 🎯 MODAL DE VISUALIZAÇÃO COM IFRAME -->
+    <div id="viewerModal" class="modal">
+        <div class="modal-content" style="max-width: 95%; height: 90vh;">
+            <div class="modal-header">
+                <h2><i class="fas fa-file-alt"></i> Visualização do Documento</h2>
+                <button id="closeViewer" class="btn-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body" style="padding: 0; height: calc(100% - 80px);">
+                <!-- 🎯 BARRA DE CONTROLES COMPLETA -->
+                <div class="viewer-controls">
+                    <div class="viewer-tabs">
+                        <button class="viewer-tab active" data-type="pdf">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </button>
+                        <button class="viewer-tab" data-type="doc">
+                            <i class="fas fa-file-word"></i> Documento Word
+                        </button>
+                        <button class="viewer-tab" data-type="folder">
+                            <i class="fas fa-folder-open"></i> Minha Pasta
+                        </button>
+                    </div>
+                    <div class="viewer-actions">
+                        <button class="btn-link" id="downloadPdf">
+                            <i class="fas fa-download"></i> Baixar PDF
+                        </button>
+                        <button class="btn-link" id="downloadDoc">
+                            <i class="fas fa-download"></i> Baixar DOC
+                        </button>
+                        <button class="btn-link" id="openExternal">
+                            <i class="fas fa-external-link-alt"></i> Abrir no Drive
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 🎯 CONTAINER DO IFRAME -->
+                <div class="iframe-container">
+                    <div id="iframeLoading" class="iframe-loading" style="display: none;">
+                        <div class="loading-spinner"></div>
+                        <p>Carregando documento...</p>
+                    </div>
+                    <iframe id="documentViewer" class="document-viewer" 
+                            frameborder="0" scrolling="yes"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer>
         <div class="container">
@@ -248,38 +302,34 @@
         </div>
     </footer>
     
-<!-- Modal de Loading -->
-<div id="loadingModal" class="modal" style="display: none;">
-    <div class="modal-content" style="text-align: center; max-width: 400px;">
-        <div class="loading-spinner">
-            <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--primary);"></i>
-        </div>
-        <h3 style="margin: 20px 0 10px;">Gerando Documentos</h3>
-        <p id="loadingMessage" style="color: var(--text-light);">
-            Conectando com o servidor...
-        </p>
-        <div style="margin-top: 20px; padding: 15px; background: var(--background-light); border-radius: 8px;">
-            <small style="color: var(--text-light);">
-                <i class="fas fa-info-circle"></i>
-                Isso pode levar alguns segundos...
-            </small>
+    <!-- Modal de Loading -->
+    <div id="loadingModal" class="modal" style="display: none;">
+        <div class="modal-content" style="text-align: center; max-width: 400px;">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--primary);"></i>
+            </div>
+            <h3 style="margin: 20px 0 10px;">Gerando Documentos</h3>
+            <p id="loadingMessage" style="color: var(--text-light);">
+                Conectando com o servidor...
+            </p>
+            <div style="margin-top: 20px; padding: 15px; background: var(--background-light); border-radius: 8px;">
+                <small style="color: var(--text-light);">
+                    <i class="fas fa-info-circle"></i>
+                    Isso pode levar alguns segundos...
+                </small>
+            </div>
         </div>
     </div>
-</div>
-    <!-- Scripts - ORDEM CORRETA É CRÍTICA! -->
-    
-    <!-- 1. Firebase SDK -->
+
+    <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     
-    <!-- 2. Nossos arquivos Firebase -->
     <script src="firebase-config.js"></script>
     <script src="firebase-auth.js"></script>
     <script src="firebase-documents.js"></script>
     
-    <!-- 3. Script principal POR ÚLTIMO -->
     <script src="script.js"></script>
 </body>
 </html>
-
