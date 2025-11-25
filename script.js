@@ -33,7 +33,7 @@ async function callAppsScriptDirect(data) {
   try {
     console.log('🔗 Iniciando processo com polling CORRETO...');
     
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxt1upsPBcs8qJXCjR7VGgoCdFVyNV1ucVob2WV33QoWOuRn0r-40p_hqfCYG87h8-U/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLVtLlQ3KXlgTQayyhYYVThuQyUlfsftjAoQ9guVQs7AKOdXWlVrzCARUszYta1d_A/exec';
     
     // 🎯 1. ENVIAR VIA JSONP (técnica alternativa para evitar CORS)
     console.log('📤 Enviando dados via JSONP...');
@@ -110,7 +110,7 @@ function sendViaJsonp(url, data) {
 }
 // 🎯 FUNÇÃO DE POLLING PARA VERIFICAR STATUS - CORRIGIDA
 async function pollDocumentStatus(documentId) {
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxt1upsPBcs8qJXCjR7VGgoCdFVyNV1ucVob2WV33QoWOuRn0r-40p_hqfCYG87h8-U/exec';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLVtLlQ3KXlgTQayyhYYVThuQyUlfsftjAoQ9guVQs7AKOdXWlVrzCARUszYta1d_A/exec';
   
   const maxAttempts = 15; // Reduzido para testes
   const pollInterval = 4000; // 4 segundos (mais tempo para processar templates)
@@ -1433,6 +1433,7 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
+
 
 
 
