@@ -28,6 +28,7 @@ async function callAppsScriptViaProxy(data) {
     throw error;
   }
 }
+
 // 🎯 FUNÇÃO COM POLLING PARA LINKS REAIS - CORRIGIDA
 async function callAppsScriptDirect(data) {
   try {
@@ -63,6 +64,7 @@ async function callAppsScriptDirect(data) {
     return await callAppsScriptNoCors(data);
   }
 }
+
 // 🎯 FUNÇÃO PARA ENVIAR DADOS VIA JSONP (evita CORS)
 function sendViaJsonp(url, data) {
   return new Promise((resolve, reject) => {
@@ -108,7 +110,8 @@ function sendViaJsonp(url, data) {
     console.log('📤 JSONP enviado, aguardando callback...');
   });
 }
-// 🎯 FUNÇÃO DE POLLING PARA VERIFICAR STATUS - CORRIGIDA
+
+// 🎯 FUNÇÃO DE POLLING PARA VERIFICAR STATUS - CORRIGIDA E COMPLETA
 async function pollDocumentStatus(documentId) {
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLVtLlQ3KXlgTQayyhYYVThuQyUlfsftjAoQ9guVQs7AKOdXWlVrzCARUszYta1d_A/exec';
   
@@ -168,24 +171,10 @@ async function pollDocumentStatus(documentId) {
     }
   }
   
-  // 🎯 SE CHEGOU AQUI, TEMPO ESGOTADO (APENAS UMA VEZ!)
-  throw new Error(`Tempo esgotado (${maxAttempts * pollInterval / 1000} segundos). O documento pode estar sendo processado - verifique seu Google Drive.`);
-}
-    
-    // 🎯 AGUARDAR ANTES DA PRÓXIMA TENTATIVA
-    if (attempt < maxAttempts) {
-      console.log(`⏳ Aguardando ${pollInterval}ms...`);
-      await new Promise(resolve => setTimeout(resolve, pollInterval));
-    }
-  }
-  
   // 🎯 SE CHEGOU AQUI, TEMPO ESGOTADO
   throw new Error(`Tempo esgotado (${maxAttempts * pollInterval / 1000} segundos). O documento pode estar sendo processado - verifique seu Google Drive.`);
 }
-  
-  // 🎯 SE CHEGOU AQUI, TEMPO ESGOTADO
-  throw new Error(`Tempo esgotado (${maxAttempts * pollInterval / 1000} segundos). O documento pode estar sendo processado - verifique seu Google Drive em alguns minutos.`);
-}
+
 // 🎯 FUNÇÃO FALLBACK - MODO NO-CORS (SE CORS AINDA FALHAR)
 async function callAppsScriptNoCors(data) {
   try {
@@ -227,6 +216,7 @@ async function callAppsScriptNoCors(data) {
     throw new Error('Falha na comunicação com o servidor: ' + error.message);
   }
 }
+
 // 🎯 FUNÇÃO PARA ATUALIZAR INTERFACE DO USUÁRIO
 function atualizarInterfaceUsuario() {
     const userName = document.getElementById('userName');
@@ -1143,7 +1133,6 @@ function gerarNumeroOfício() {
     return `OF-${numero}`;
 }
 
-
 // Geração de documentos ATUALIZADA
 async function gerarDocumentoCompleto(documentType, formData) {
     try {
@@ -1177,7 +1166,8 @@ async function gerarDocumentoCompleto(documentType, formData) {
         }
 
         // Chamar via GitHub Actions proxy
-const result = await callAppsScriptViaProxy(requestData);
+        const result = await callAppsScriptViaProxy(requestData);
+        
         // Esconder loading
         if (loadingModal) {
             loadingModal.style.display = 'none';
@@ -1201,7 +1191,9 @@ const result = await callAppsScriptViaProxy(requestData);
         
         mostrarModalErro(error.message, formData["Nome da Escola"], documentType);
     }
-}// ================================
+}
+
+// ================================
 // FUNÇÕES DO MODAL
 // ================================
 
@@ -1444,19 +1436,3 @@ function debugLogin() {
 window.debugLogin = debugLogin;
 
 console.log('🎯 SISTEMA CARREGADO - VERSÃO FIREBASE!');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
